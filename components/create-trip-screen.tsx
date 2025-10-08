@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,6 +14,60 @@ interface CreateTripScreenProps {
 }
 
 export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) {
+  const [formData, setFormData] = useState({
+    origin: "",
+    destination: "",
+    date: "",
+    time: "",
+    availableSeats: 1,
+    pricePerPerson: "",
+    vehicle: "",
+    music: false,
+    pets: false,
+    children: false,
+    luggage: false,
+    notes: "",
+  })
+
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          driverId: "12345", // 🔹 reemplazá esto con el ID real del conductor logueado
+          origin: formData.origin,
+          destination: formData.destination,
+          date: formData.date,
+          time: formData.time,
+          availableSeats: Number(formData.availableSeats),
+          pricePerPerson: Number(formData.pricePerPerson),
+          vehicle: formData.vehicle,
+          music: formData.music,
+          pets: formData.pets,
+          children: formData.children,
+          luggage: formData.luggage,
+          notes: formData.notes,
+        }),
+      })
+
+      if (!response.ok) throw new Error("Error al crear el viaje")
+
+      const data = await response.json()
+      console.log("Viaje creado:", data)
+
+      alert("✅ Viaje creado correctamente")
+      onComplete()
+    } catch (error) {
+      console.error(error)
+      alert("❌ Ocurrió un error al crear el viaje")
+    }
+  }
+
   return (
     <div className="h-[800px] flex flex-col bg-background">
       {/* Header */}
@@ -27,7 +82,7 @@ export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) 
 
       {/* Form */}
       <div className="flex-1 overflow-auto p-6 space-y-6">
-        {/* Route */}
+        {/* Ruta */}
         <div className="space-y-4">
           <h2 className="font-semibold text-lg">Ruta del viaje</h2>
 
@@ -35,7 +90,13 @@ export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) 
             <Label htmlFor="from">Origen</Label>
             <div className="relative">
               <MapPin className="absolute left-3 top-3 h-4 w-4 text-primary" />
-              <Input id="from" placeholder="¿Desde dónde salís?" className="pl-10" />
+              <Input
+                id="from"
+                placeholder="¿Desde dónde salís?"
+                className="pl-10"
+                value={formData.origin}
+                onChange={(e) => handleChange("origin", e.target.value)}
+              />
             </div>
           </div>
 
@@ -43,12 +104,18 @@ export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) 
             <Label htmlFor="to">Destino</Label>
             <div className="relative">
               <MapPin className="absolute left-3 top-3 h-4 w-4 text-secondary" />
-              <Input id="to" placeholder="¿A dónde vas?" className="pl-10" />
+              <Input
+                id="to"
+                placeholder="¿A dónde vas?"
+                className="pl-10"
+                value={formData.destination}
+                onChange={(e) => handleChange("destination", e.target.value)}
+              />
             </div>
           </div>
         </div>
 
-        {/* Date & Time */}
+        {/* Fecha y hora */}
         <div className="space-y-4">
           <h2 className="font-semibold text-lg">Fecha y hora</h2>
 
@@ -57,7 +124,13 @@ export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) 
               <Label htmlFor="date">Fecha</Label>
               <div className="relative">
                 <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="date" type="date" className="pl-10" />
+                <Input
+                  id="date"
+                  type="date"
+                  className="pl-10"
+                  value={formData.date}
+                  onChange={(e) => handleChange("date", e.target.value)}
+                />
               </div>
             </div>
 
@@ -65,13 +138,19 @@ export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) 
               <Label htmlFor="time">Hora</Label>
               <div className="relative">
                 <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="time" type="time" className="pl-10" />
+                <Input
+                  id="time"
+                  type="time"
+                  className="pl-10"
+                  value={formData.time}
+                  onChange={(e) => handleChange("time", e.target.value)}
+                />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Trip Details */}
+        {/* Detalles */}
         <div className="space-y-4">
           <h2 className="font-semibold text-lg">Detalles del viaje</h2>
 
@@ -80,7 +159,14 @@ export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) 
               <Label htmlFor="seats">Asientos disponibles</Label>
               <div className="relative">
                 <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="seats" type="number" min="1" max="4" defaultValue="2" className="pl-10" />
+                <Input
+                  id="seats"
+                  type="number"
+                  min="1"
+                  value={formData.availableSeats}
+                  onChange={(e) => handleChange("availableSeats", e.target.value)}
+                  className="pl-10"
+                />
               </div>
             </div>
 
@@ -88,7 +174,13 @@ export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) 
               <Label htmlFor="price">Precio por persona</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="price" type="number" placeholder="8500" className="pl-10" />
+                <Input
+                  id="price"
+                  type="number"
+                  value={formData.pricePerPerson}
+                  onChange={(e) => handleChange("pricePerPerson", e.target.value)}
+                  className="pl-10"
+                />
               </div>
             </div>
           </div>
@@ -97,64 +189,55 @@ export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) 
             <Label htmlFor="vehicle">Vehículo</Label>
             <div className="relative">
               <Car className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input id="vehicle" placeholder="Ej: Toyota Corolla 2020" className="pl-10" />
+              <Input
+                id="vehicle"
+                placeholder="Ej: Toyota Corolla 2020"
+                className="pl-10"
+                value={formData.vehicle}
+                onChange={(e) => handleChange("vehicle", e.target.value)}
+              />
             </div>
           </div>
         </div>
 
-        {/* Preferences */}
+        {/* Preferencias */}
         <div className="space-y-4">
           <h2 className="font-semibold text-lg">Preferencias</h2>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          {[
+            { label: "Música durante el viaje", icon: Music, field: "music" },
+            { label: "Acepto mascotas", icon: Dog, field: "pets" },
+            { label: "Acepto niños", icon: Baby, field: "children" },
+            { label: "Espacio para equipaje", icon: Luggage, field: "luggage" },
+          ].map((pref) => (
+            <div key={pref.field} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Music className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="music-pref">Música durante el viaje</Label>
+                <pref.icon className="h-5 w-5 text-muted-foreground" />
+                <Label>{pref.label}</Label>
               </div>
-              <Switch id="music-pref" />
+              <Switch
+                checked={formData[pref.field as keyof typeof formData] as boolean}
+                onCheckedChange={(val) => handleChange(pref.field, val)}
+              />
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Dog className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="pets-pref">Acepto mascotas</Label>
-              </div>
-              <Switch id="pets-pref" />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Baby className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="kids-pref">Acepto niños</Label>
-              </div>
-              <Switch id="kids-pref" />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Luggage className="h-5 w-5 text-muted-foreground" />
-                <Label htmlFor="luggage-pref">Espacio para equipaje</Label>
-              </div>
-              <Switch id="luggage-pref" />
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Notes */}
+        {/* Notas */}
         <div className="space-y-2">
           <Label htmlFor="notes">Notas adicionales (opcional)</Label>
           <Textarea
             id="notes"
-            placeholder="Ej: Salgo desde el centro de la ciudad, puedo pasar a buscar por la terminal..."
+            value={formData.notes}
+            onChange={(e) => handleChange("notes", e.target.value)}
+            placeholder="Ej: Salgo desde el centro de la ciudad..."
             rows={3}
           />
         </div>
       </div>
 
-      {/* Actions */}
+      {/* Botón */}
       <div className="p-6 border-t border-border bg-card">
-        <Button onClick={onComplete} className="w-full h-12" size="lg">
+        <Button onClick={handleSubmit} className="w-full h-12" size="lg">
           Publicar viaje
         </Button>
       </div>
