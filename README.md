@@ -1,5 +1,6 @@
 # RUMBO APP MOBILE (MVP)
 Instructions:
-- "npm install"
-- "npm run dev" o "npm start" (solucionar erro al usar npm start)
+- 1) "npm install"
+- 2) "npm next build"
+- 3) "npm start" o "npm run dev"
 - Para ver vista mobile en tiempo real instalar extensión en VS Code: "MobileView"
