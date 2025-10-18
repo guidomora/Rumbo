@@ -60,69 +60,60 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // ✅ Cargar viajes desde el backend
-/*
   useEffect(() => {
-    const fetchTrips = async () => {
-      try {
-        const res = await fetch("http://localhost:3000/api/trips")
-        if (!res.ok) throw new Error("Error al obtener los viajes")
-        const data = await res.json()
-        setTrips(data.data || [])
-      } catch (err: any) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTrips()
-  }, [])
-*/
-  
-useEffect(() => {
-  setTrips([
-    {
-      id: "1",
-      driverId: "María González",
-      origin: "Olavarría",
-      destination: "Once, CABA",
-      date: "25-11-2023",
-      time: "14:30",
-      availableSeats: 2,
-      pricePerPerson: 8500
-    },
-    {
-      id: "2",
-      driverId: "Carlos Rodríguez",
-      origin: "Chivilcoy",
-      destination: "Retiro, CABA",
-      date: "25-11-2023",
-      time: "14:30",
-      availableSeats: 3,
-      pricePerPerson: 8500
-    },
-    {
-      id: "3",
-      driverId: "Juan Pérez",
-      origin: "Mercedes",
-      destination: "Palermo, CABA",
-      date: "25-11-2023",
-      time: "14:30",
-      availableSeats: 3,
-      pricePerPerson: 8500
-    },
-  ])
-  setLoading(false)
-}, [])
-
+    setTrips([
+      {
+        id: "1",
+        driverId: "María González",
+        origin: "Olavarría",
+        destination: "Once, CABA",
+        date: "25-11-2023",
+        time: "14:30",
+        availableSeats: 2,
+        pricePerPerson: 8500,
+        music: true,
+        pets: false,
+        children: true,
+        luggage: true,
+      },
+      {
+        id: "2",
+        driverId: "Carlos Rodríguez",
+        origin: "Chivilcoy",
+        destination: "Retiro, CABA",
+        date: "25-11-2023",
+        time: "14:30",
+        availableSeats: 3,
+        pricePerPerson: 8500,
+        music: false,
+        pets: true,
+        children: false,
+        luggage: true,
+      },
+      {
+        id: "3",
+        driverId: "Juan Pérez",
+        origin: "Mercedes",
+        destination: "Palermo, CABA",
+        date: "25-11-2023",
+        time: "14:30",
+        availableSeats: 3,
+        pricePerPerson: 8500,
+        music: true,
+        pets: true,
+        children: false,
+        luggage: false,
+      },
+    ]);
+    setLoading(false);
+  }, []);
 
   // Función para normalizar cadenas eliminando tildes
   const normalizeString = (str: string) => {
     return str.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
   };
 
-  // ✅ Aplicar filtros
+  // Aplicar filtros
   const filteredTrips = trips.filter((trip) => {
     if (filters.music && !trip.music) return false;
     if (filters.pets && !trip.pets) return false;
@@ -146,72 +137,88 @@ useEffect(() => {
         </div>
 
         {/* Search Inputs */}
-        <div className="space-y-2">
-          <div className="relative">
-            <MapPin className="absolute left-3 top-3 h-4 w-4 text-primary" />
+        <div className="flex flex-col gap-2">
+          {/* Input Origen */}
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
             <Input
               placeholder="Origen"
-              className="pl-10"
+              className="flex-1"
               value={searchFilters.origin}
               onChange={(e) => setSearchFilters({ ...searchFilters, origin: e.target.value })}
             />
           </div>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-3 h-4 w-4 text-secondary" />
+
+          {/* Input Destino */}
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-secondary flex-shrink-0" />
             <Input
               placeholder="Destino"
-              className="pl-10"
+              className="flex-1"
               value={searchFilters.destination}
               onChange={(e) => setSearchFilters({ ...searchFilters, destination: e.target.value })}
             />
           </div>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+
+          {/* Fecha y Filtro en la misma fila */}
+          <div className="flex items-center gap-2">
+            {/* Input Fecha */}
+            <div className="flex items-center gap-2 flex-1">
+              <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <Input
                 type="date"
-                className="pl-10"
+                className="flex-1"
                 value={searchFilters.date}
                 onChange={(e) => setSearchFilters({ ...searchFilters, date: e.target.value })}
               />
             </div>
 
-            {/* Sheet de filtros */}
+            {/* Botón de filtro */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon">
                   <SlidersHorizontal className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="h-[400px]">
+              <SheetContent side="bottom" className="h-[400px] p-4">
                 <SheetHeader>
                   <SheetTitle>Filtros de búsqueda</SheetTitle>
-                  <SheetDescription>Personalizá tu búsqueda según tus preferencias</SheetDescription>
+                  <SheetDescription>
+                    Personalizá tu búsqueda según tus preferencias
+                  </SheetDescription>
                 </SheetHeader>
-                <div className="space-y-6 mt-6">
-                  {[
-                    { id: "music", label: "Música durante el viaje", icon: Music },
-                    { id: "pets", label: "Acepta mascotas", icon: Dog },
-                    { id: "kids", label: "Acepta niños", icon: Baby },
-                    { id: "luggage", label: "Espacio para equipaje", icon: Luggage },
-                  ].map(({ id, label, icon: Icon }) => (
-                    <div key={id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Icon className="h-5 w-5 text-muted-foreground" />
-                        <Label htmlFor={id}>{label}</Label>
+                <div className="overflow-auto mt-4 space-y-4">
+                  <Card className="p-4 bg-background border border-border">
+                    {[
+                      { id: "music", label: "Música durante el viaje", icon: Music },
+                      { id: "pets", label: "Acepta mascotas", icon: Dog },
+                      { id: "kids", label: "Acepta niños", icon: Baby },
+                      { id: "luggage", label: "Espacio para equipaje", icon: Luggage },
+                    ].map(({ id, label, icon: Icon }) => (
+                      <div
+                        key={id}
+                        className="flex items-center justify-between border-b last:border-b-0 pb-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Icon className="h-5 w-5 text-muted-foreground" />
+                          <Label htmlFor={id}>{label}</Label>
+                        </div>
+                        <Switch
+                          id={id}
+                          checked={(filters as any)[id]}
+                          onCheckedChange={(checked) =>
+                            setFilters({ ...filters, [id]: checked })
+                          }
+                        />
                       </div>
-                      <Switch
-                        id={id}
-                        checked={(filters as any)[id]}
-                        onCheckedChange={(checked) => setFilters({ ...filters, [id]: checked })}
-                      />
-                    </div>
-                  ))}
+                    ))}
+                  </Card>
                 </div>
               </SheetContent>
             </Sheet>
           </div>
         </div>
+
       </div>
 
       {/* Results */}
@@ -262,11 +269,11 @@ useEffect(() => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 mb-3">
-                    {trip.music && <Badge variant="outline" className="text-xs"><Music className="w-3 h-3 mr-1" />Música</Badge>}
-                    {trip.pets && <Badge variant="outline" className="text-xs"><Dog className="w-3 h-3 mr-1" />Mascotas</Badge>}
-                    {trip.children && <Badge variant="outline" className="text-xs"><Baby className="w-3 h-3 mr-1" />Niños</Badge>}
-                    {trip.luggage && <Badge variant="outline" className="text-xs"><Luggage className="w-3 h-3 mr-1" />Equipaje</Badge>}
+                  <div className="flex flex-wrap items-center gap-2 mt-2 mb-3">
+                    {trip.music && <Badge variant="secondary" className="text-xs flex items-center gap-1"><Music className="w-3 h-3" />Música</Badge>}
+                    {trip.pets && <Badge variant="secondary" className="text-xs flex items-center gap-1"><Dog className="w-3 h-3" />Mascotas</Badge>}
+                    {trip.children && <Badge variant="secondary" className="text-xs flex items-center gap-1"><Baby className="w-3 h-3" />Niños</Badge>}
+                    {trip.luggage && <Badge variant="secondary" className="text-xs flex items-center gap-1"><Luggage className="w-3 h-3" />Equipaje</Badge>}
                   </div>
 
                   <div className="flex items-center justify-between pt-3 border-t border-border">
