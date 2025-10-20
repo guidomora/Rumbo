@@ -1,4 +1,5 @@
 "use client"
+import { useState } from "react"
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -22,34 +23,61 @@ import {
   CheckCircle2,
 } from "lucide-react"
 
+interface Trip {
+  id: string
+  driverId: string
+  origin: string
+  destination: string
+  date: string
+  time: string
+  availableSeats: number
+  pricePerPerson: number
+  music?: boolean
+  pets?: boolean
+  children?: boolean
+  luggage?: boolean
+  notes?: string
+}
+
 interface TripDetailScreenProps {
   onBack: () => void
+  userId: string | null
+  trip: Trip
   userType: "passenger" | "driver"
 }
 
-export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
-  const params = useParams();
-  const tripId = params.id;
+export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailScreenProps) {
+    console.log("Reserving seats for trip ID:", trip);
+    console.log("User ID:", userId);
 
-  const handleReserve = async (seats: number) => {
+  //COMENTO CAMBIO PARA VER SI FUNCIONA TRIP
+  //const params = useParams();
+  //const tripId = params.id;
+
+  const handleReserve = async (seats: number) => {;
+    const tripId = trip.id;
+
+    console.log("Reserving seats for trip ID:", tripId);
+    if (!tripId) {
+      alert("ID del viaje no encontrado");
+      return;
+    }
+
     try {
       const response = await fetch(`http://localhost:3000/api/trips/${tripId}/select`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          userId: "5f47ac10-b58d-4373-a567-0e02b2c3d479", // ID real del usuario si lo tenés
-          seats,
-        }),
+        body: JSON.stringify({ userId, seats }),
       });
 
       if (!response.ok) throw new Error("Error al reservar el lugar");
 
-      alert("✅ Lugar reservado con éxito");
+      alert("Lugar reservado con éxito");
     } catch (error) {
       console.error(error);
-      alert(" Hubo un problema al reservar el lugar");
+      alert("Hubo un problema al reservar el lugar");
     }
   };
 
@@ -267,9 +295,9 @@ export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
             </div>
           </div>
           <Button
-            className="w-full h-12 cursor-pointer"
+            className="w-full h-12"
             size="lg"
-            onClick={() => handleReserve(1)} // Enviar la cantidad de asientos deseada
+            onClick={() => handleReserve(1)}
           >
             <CheckCircle2 className="w-5 h-5 mr-2" />
             Reservar lugar

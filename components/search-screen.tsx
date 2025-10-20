@@ -23,10 +23,6 @@ import {
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
 
-interface SearchScreenProps {
-  onBack: () => void
-  onSelectTrip: (tripId: string) => void
-}
 
 interface Trip {
   id: string
@@ -42,6 +38,16 @@ interface Trip {
   children?: boolean
   luggage?: boolean
   notes?: string
+}
+
+interface TripDetailsProps {
+  trip: Trip
+  onBack: () => void
+}
+
+interface SearchScreenProps {
+  onBack: () => void
+  onSelectTrip: (trip: Trip) => void
 }
 
 export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
@@ -61,7 +67,7 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
   const [error, setError] = useState<string | null>(null)
 
   // ✅ Cargar viajes desde el backend
-/*
+
   useEffect(() => {
     const fetchTrips = async () => {
       try {
@@ -78,44 +84,6 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
 
     fetchTrips()
   }, [])
-*/
-  
-useEffect(() => {
-  setTrips([
-    {
-      id: "1",
-      driverId: "María González",
-      origin: "Olavarría",
-      destination: "Once, CABA",
-      date: "25-11-2023",
-      time: "14:30",
-      availableSeats: 2,
-      pricePerPerson: 8500
-    },
-    {
-      id: "2",
-      driverId: "Carlos Rodríguez",
-      origin: "Chivilcoy",
-      destination: "Retiro, CABA",
-      date: "25-11-2023",
-      time: "14:30",
-      availableSeats: 3,
-      pricePerPerson: 8500
-    },
-    {
-      id: "3",
-      driverId: "Juan Pérez",
-      origin: "Mercedes",
-      destination: "Palermo, CABA",
-      date: "25-11-2023",
-      time: "14:30",
-      availableSeats: 3,
-      pricePerPerson: 8500
-    },
-  ])
-  setLoading(false)
-}, [])
-
 
   // Función para normalizar cadenas eliminando tildes
   const normalizeString = (str: string) => {
@@ -231,7 +199,7 @@ useEffect(() => {
                 <Card
                   key={trip.id}
                   className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => onSelectTrip(trip.id)}
+                  onClick={() => onSelectTrip(trip)}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
