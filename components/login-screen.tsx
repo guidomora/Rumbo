@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,11 +9,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Car, Mail, Lock, User, Phone, CreditCard } from "lucide-react"
 
 interface LoginScreenProps {
-  onLogin: (userType: "passenger" | "driver") => void
+  onLogin: (userType: "passenger" | "driver", userId: string | null) => void
+
 }
 
 export function LoginScreen({ onLogin }: LoginScreenProps) {
-  const [isLogin, setIsLogin] = useState(true)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userType, setUserType] = useState<"passenger" | "driver" | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch("http://localhost:3000/api/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Credenciales inválidas")
+      }
+
+      const data = await response.json()
+      setIsLoggedIn(true) // Marcar como logueado
+      setUserId(data.user.id); // Guardar el userId recibido
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error)
+      alert("Hubo un problema al iniciar sesión")
+    }
+  }
 
   return (
     <div className="h-[800px] flex flex-col bg-background">
@@ -29,7 +58,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
-        <Tabs defaultValue="login" className="w-full" onValueChange={(v) => setIsLogin(v === "login")}>
+        <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="login">Iniciar sesión</TabsTrigger>
             <TabsTrigger value="register">Registrarse</TabsTrigger>
@@ -40,7 +69,14 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="tu@email.com" className="pl-10" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="tu@email.com"
+                  className="pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
               </div>
             </div>
 
@@ -48,23 +84,47 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="password">Contraseña</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="password" type="password" placeholder="••••••••" className="pl-10" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="pl-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
             </div>
 
-            <Button variant="link" className="px-0 text-sm">
-              ¿Olvidaste tu contraseña?
-            </Button>
-
-            <div className="space-y-3 pt-4">
-              <Button onClick={() => onLogin("passenger")} className="w-full h-12" size="lg">
-                Ingresar como Pasajero
+            {isLoggedIn ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Selecciona tu rol:</p>
+                <Button
+                  className="w-full h-12"
+                  size="lg"
+                  onClick={() => setUserType("passenger")}
+                >
+                  Ingresar como Pasajero
+                </Button>
+                <Button
+                  className="w-full h-12"
+                  size="lg"
+                  variant="secondary"
+                  onClick={() => setUserType("driver")}
+                >
+                  Ingresar como Conductor
+                </Button>
+                {userType && (
+                  (() => {
+                    onLogin(userType, userId);
+                    return null;
+                  })()
+                )}
+              </div>
+            ) : (
+              <Button onClick={handleLogin} className="w-full h-12" size="lg">
+                Ingresar
               </Button>
-
-              <Button onClick={() => onLogin("driver")} variant="secondary" className="w-full h-12" size="lg">
-                Ingresar como Conductor
-              </Button>
-            </div>
+            )}
           </TabsContent>
 
           <TabsContent value="register" className="space-y-4">
@@ -109,7 +169,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
             </div>
 
             <div className="space-y-3 pt-4">
-              <Button onClick={() => onLogin("passenger")} className="w-full h-12" size="lg">
+              <Button onClick={() => onLogin("passenger", userId)} className="w-full h-12" size="lg">
                 Crear cuenta
               </Button>
             </div>

@@ -1,5 +1,6 @@
 "use client"
-
+import { useState } from "react"
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -22,12 +23,64 @@ import {
   CheckCircle2,
 } from "lucide-react"
 
+interface Trip {
+  id: string
+  driverId: string
+  origin: string
+  destination: string
+  date: string
+  time: string
+  availableSeats: number
+  pricePerPerson: number
+  music?: boolean
+  pets?: boolean
+  children?: boolean
+  luggage?: boolean
+  notes?: string
+}
+
 interface TripDetailScreenProps {
   onBack: () => void
+  userId: string | null
+  trip: Trip
   userType: "passenger" | "driver"
 }
 
-export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
+export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailScreenProps) {
+    console.log("Reserving seats for trip ID:", trip);
+    console.log("User ID:", userId);
+
+  //COMENTO CAMBIO PARA VER SI FUNCIONA TRIP
+  //const params = useParams();
+  //const tripId = params.id;
+
+  const handleReserve = async (seats: number) => {
+    const tripId = trip.id;
+
+    console.log("Reserving seats for trip ID:", tripId);
+    if (!tripId) {
+      alert("ID del viaje no encontrado");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/trips/${tripId}/select`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, seats }),
+      });
+
+      if (!response.ok) throw new Error("Error al reservar el lugar");
+
+      alert("Lugar reservado con éxito");
+    } catch (error) {
+      console.error(error);
+      alert("Hubo un problema al reservar el lugar");
+    }
+  };
+
   return (
     <div className="h-[800px] flex flex-col bg-background">
       {/* Header */}
@@ -50,7 +103,7 @@ export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-xl font-bold">María González</h2>
+                <h2 className="text-xl font-bold">{trip.driverId}</h2>
                 <Badge variant="secondary" className="text-xs">
                   <Shield className="w-3 h-3 mr-1" />
                   Verificada
@@ -89,7 +142,7 @@ export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
                   <MapPin className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <p className="font-medium">Olavarría, Buenos Aires</p>
+                  <p className="font-medium">{trip.origin}</p>
                   <p className="text-sm text-muted-foreground">Terminal de ómnibus</p>
                 </div>
               </div>
@@ -101,7 +154,7 @@ export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
                   <MapPin className="w-4 h-4 text-secondary" />
                 </div>
                 <div>
-                  <p className="font-medium">Once, CABA</p>
+                  <p className="font-medium">{trip.destination}</p>
                   <p className="text-sm text-muted-foreground">Estación de tren</p>
                 </div>
               </div>
@@ -117,7 +170,7 @@ export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
                   <Calendar className="w-4 h-4" />
                   <span className="text-sm">Fecha</span>
                 </div>
-                <span className="font-medium">Hoy, 25 de Septiembre</span>
+                <span className="font-medium">{trip.date}</span>
               </div>
 
               <Separator />
@@ -127,7 +180,7 @@ export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
                   <Clock className="w-4 h-4" />
                   <span className="text-sm">Hora de salida</span>
                 </div>
-                <span className="font-medium">14:30 hs</span>
+                <span className="font-medium">{trip.time}</span>
               </div>
 
               <Separator />
@@ -147,7 +200,7 @@ export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
                   <User className="w-4 h-4" />
                   <span className="text-sm">Lugares disponibles</span>
                 </div>
-                <span className="font-medium">2 de 3</span>
+                <span className="font-medium">{trip.availableSeats}</span>
               </div>
 
               <Separator />
@@ -238,10 +291,14 @@ export function TripDetailScreen({ onBack, userType }: TripDetailScreenProps) {
             <span className="text-sm text-muted-foreground">Precio por persona</span>
             <div className="flex items-center gap-1">
               <DollarSign className="w-6 h-6 text-primary" />
-              <span className="text-2xl font-bold text-primary">8.500</span>
+              <span className="text-2xl font-bold text-primary">{trip.pricePerPerson}</span>
             </div>
           </div>
-          <Button className="w-full h-12" size="lg">
+          <Button
+            className="w-full h-12"
+            size="lg"
+            onClick={() => handleReserve(1)}
+          >
             <CheckCircle2 className="w-5 h-5 mr-2" />
             Reservar lugar
           </Button>

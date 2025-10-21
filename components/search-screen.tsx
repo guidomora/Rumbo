@@ -30,11 +30,6 @@ import {
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 
-interface SearchScreenProps {
-  onBack: () => void;
-  onSelectTrip: (tripId: string) => void;
-}
-
 interface Trip {
   id: string;
   driverId: string;
@@ -49,6 +44,16 @@ interface Trip {
   children?: boolean;
   luggage?: boolean;
   notes?: string;
+}
+
+interface TripDetailsProps {
+  trip: Trip
+  onBack: () => void
+}
+
+interface SearchScreenProps {
+  onBack: () => void
+  onSelectTrip: (trip: Trip) => void
 }
 
 export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
@@ -83,53 +88,24 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ Cargar viajes desde el backend
+
   useEffect(() => {
-    setTrips([
-      {
-        id: "1",
-        driverId: "María González",
-        origin: "Olavarría",
-        destination: "Once, CABA",
-        date: "25-11-2023",
-        time: "14:30",
-        availableSeats: 2,
-        pricePerPerson: 8500,
-        music: true,
-        pets: false,
-        children: true,
-        luggage: true,
-      },
-      {
-        id: "2",
-        driverId: "Carlos Rodríguez",
-        origin: "Chivilcoy",
-        destination: "Retiro, CABA",
-        date: "25-11-2023",
-        time: "14:30",
-        availableSeats: 3,
-        pricePerPerson: 8500,
-        music: false,
-        pets: true,
-        children: false,
-        luggage: true,
-      },
-      {
-        id: "3",
-        driverId: "Juan Pérez",
-        origin: "Mercedes",
-        destination: "Palermo, CABA",
-        date: "25-11-2023",
-        time: "14:30",
-        availableSeats: 3,
-        pricePerPerson: 8500,
-        music: true,
-        pets: true,
-        children: false,
-        luggage: false,
-      },
-    ]);
-    setLoading(false);
-  }, []);
+    const fetchTrips = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/trips")
+        if (!res.ok) throw new Error("Error al obtener los viajes")
+        const data = await res.json()
+        setTrips(data.data || [])
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTrips()
+  }, [])
 
   // Función para normalizar cadenas eliminando tildes
   const normalizeString = (str: string) => {
@@ -341,9 +317,7 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
                 <Card
                   key={trip.id}
                   className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => {
-                    onSelectTrip(trip.id);
-                  }}
+                  onClick={() => onSelectTrip(trip)}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">

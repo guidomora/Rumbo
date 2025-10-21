@@ -10,10 +10,28 @@ import { TripDetailScreen } from "@/components/trip-detail-screen"
 import { ProfileScreen } from "@/components/profile-screen"
 
 export default function RumboApp() {
+  interface Trip {
+  id: string
+  driverId: string
+  origin: string
+  destination: string
+  date: string
+  time: string
+  availableSeats: number
+  pricePerPerson: number
+  music?: boolean
+  pets?: boolean
+  children?: boolean
+  luggage?: boolean
+  notes?: string
+}
+  const [userId, setUserId] = useState<string | null>(null)
   const [currentScreen, setCurrentScreen] = useState<
     "onboarding" | "login" | "home" | "search" | "create" | "detail" | "profile"
   >("onboarding")
   const [userType, setUserType] = useState<"passenger" | "driver">("passenger")
+  const [trip, setTrip] = useState<Trip | null>(null)
+  console.log("userId in RumboApp:", userId);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -21,9 +39,10 @@ export default function RumboApp() {
         {currentScreen === "onboarding" && <OnboardingScreen onComplete={() => setCurrentScreen("login")} />}
         {currentScreen === "login" && (
           <LoginScreen
-            onLogin={(type) => {
-              setUserType(type)
-              setCurrentScreen("home")
+            onLogin={(type, userId) => {
+              setUserId(userId);
+              setUserType(type);
+              setCurrentScreen("home");
             }}
           />
         )}
@@ -31,13 +50,16 @@ export default function RumboApp() {
           <HomeScreen userType={userType} onNavigate={(screen) => setCurrentScreen(screen)} />
         )}
         {currentScreen === "search" && (
-          <SearchScreen onBack={() => setCurrentScreen("home")} onSelectTrip={() => setCurrentScreen("detail")} />
+          <SearchScreen onBack={() => setCurrentScreen("home")} onSelectTrip={(trip) => {
+            setTrip(trip);
+            setCurrentScreen("detail");
+          }} />
         )}
         {currentScreen === "create" && (
           <CreateTripScreen onBack={() => setCurrentScreen("home")} onComplete={() => setCurrentScreen("home")} />
         )}
-        {currentScreen === "detail" && (
-          <TripDetailScreen onBack={() => setCurrentScreen("search")} userType={userType} />
+        {currentScreen === "detail" && trip && (
+          <TripDetailScreen onBack={() => setCurrentScreen("search")} userId={userId} trip={trip} userType={userType} />
         )}
         {currentScreen === "profile" && <ProfileScreen onBack={() => setCurrentScreen("home")} userType={userType} />}
       </div>
