@@ -32,6 +32,7 @@ interface Trip {
   time: string
   availableSeats: number
   pricePerPerson: number
+  vehicle: string
   music?: boolean
   pets?: boolean
   children?: boolean
@@ -210,7 +211,7 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
                   <Car className="w-4 h-4" />
                   <span className="text-sm">Vehículo</span>
                 </div>
-                <span className="font-medium">Toyota Corolla 2020</span>
+                <span className="font-medium">{trip.vehicle}</span>
               </div>
             </div>
           </Card>
@@ -219,66 +220,30 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
           <Card className="p-4">
             <h3 className="font-semibold mb-4">Preferencias del viaje</h3>
             <div className="flex flex-wrap gap-2">
+            {trip.pets && (
+              <Badge variant="outline" className="text-sm">
+                <Music className="w-3 h-3 mr-1" />
+                Mascotas permitidas
+              </Badge>
+            )}
+            {trip.music && (
               <Badge variant="outline" className="text-sm">
                 <Music className="w-3 h-3 mr-1" />
                 Música
               </Badge>
+            )}
+            {trip.children && (
               <Badge variant="outline" className="text-sm">
                 <Baby className="w-3 h-3 mr-1" />
                 Acepta niños
               </Badge>
+            )}
+            {trip.luggage && (
               <Badge variant="outline" className="text-sm">
                 <Luggage className="w-3 h-3 mr-1" />
                 Espacio para equipaje
               </Badge>
-            </div>
-          </Card>
-
-          {/* Reviews */}
-          <Card className="p-4">
-            <h3 className="font-semibold mb-4">Reseñas recientes</h3>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Juan Pérez</p>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Hace 2 días</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Excelente conductora, muy puntual y el viaje fue muy cómodo. Recomendada!
-                </p>
-              </div>
-
-              <Separator />
-
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Laura Gómez</p>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground">Hace 1 semana</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Muy buena experiencia, el auto estaba impecable y María es muy amable.
-                </p>
-              </div>
+            )}
             </div>
           </Card>
         </div>
