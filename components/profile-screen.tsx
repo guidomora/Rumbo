@@ -8,7 +8,6 @@ import { ArrowLeft, User, Star, MapPin, Calendar, Settings, Shield, Award, Car, 
 interface ProfileScreenProps {
   onBack: () => void
   userType: "passenger" | "driver"
-  onNavigate: (screen: "home" | "login" | "profile" | "search" | "create") => void
 }
 
 const tripHistory = [
@@ -38,7 +37,7 @@ const tripHistory = [
   },
 ]
 
-export function ProfileScreen({ onBack, userType, onNavigate }: ProfileScreenProps) {
+export function ProfileScreen({ onBack, userType }: ProfileScreenProps) {
   return (
     <div className="h-[800px] flex flex-col bg-background">
       {/* Header */}
@@ -219,11 +218,7 @@ export function ProfileScreen({ onBack, userType, onNavigate }: ProfileScreenPro
         <Button variant="outline" className="w-full bg-transparent">
           Editar perfil
         </Button>
-        <Button
-          variant="ghost"
-          className="w-full text-destructive"
-          onClick={() => onNavigate("login")}
-        >
+        <Button variant="ghost" className="w-full text-destructive">
           Cerrar sesión
         </Button>
       </div>
