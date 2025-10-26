@@ -5,46 +5,55 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Search, MapPin, Calendar, Plus, Home, User, Star, Clock, DollarSign } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface HomeScreenProps {
   userType: "passenger" | "driver"
   onNavigate: (screen: "search" | "create" | "profile") => void
 }
 
-const recentTrips = [
-  {
-    id: 1,
-    driver: "María González",
-    rating: 4.8,
-    from: "Olavarría",
-    to: "Once, CABA",
-    date: "Hoy 14:30",
-    price: 8500,
-    seats: 2,
-  },
-  {
-    id: 2,
-    driver: "Carlos Rodríguez",
-    rating: 4.9,
-    from: "Chivilcoy",
-    to: "Retiro, CABA",
-    date: "Mañana 08:00",
-    price: 7200,
-    seats: 3,
-  },
-  {
-    id: 3,
-    driver: "Ana Martínez",
-    rating: 5.0,
-    from: "Mercedes",
-    to: "Palermo, CABA",
-    date: "Mañana 16:00",
-    price: 6800,
-    seats: 1,
-  },
-]
+interface Trip {
+  id: string
+  driverId: string
+  origin: string
+  destination: string
+  date: string
+  time: string
+  availableSeats: number
+  pricePerPerson: number
+  vehicle: string
+  music?: boolean
+  pets?: boolean
+  children?: boolean
+  luggage?: boolean
+  notes?: string
+}
+
+
 
 export function HomeScreen({ userType, onNavigate }: HomeScreenProps) {
+
+  const [trips, setTrips] = useState<Trip[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+      const fetchTrips = async () => {
+        try {
+          const res = await fetch("http://localhost:3000/api/trips")
+          if (!res.ok) throw new Error("Error al obtener los viajes")
+          const data = await res.json()
+          setTrips(data.data || [])
+        } catch (err: any) {
+          setError(err.message)
+        } finally {
+          setLoading(false)
+        }
+      }
+  
+      fetchTrips()
+    }, [])
+    
   return (
     <div className="h-[800px] flex flex-col bg-background">
       {/* Header */}
@@ -121,7 +130,7 @@ export function HomeScreen({ userType, onNavigate }: HomeScreenProps) {
           </div>
 
           <div className="space-y-3">
-            {recentTrips.map((trip) => (
+            {trips?.map((trip) => (
               <Card key={trip.id} className="p-4 hover:shadow-md transition-shadow cursor-pointer">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -129,26 +138,26 @@ export function HomeScreen({ userType, onNavigate }: HomeScreenProps) {
                       <User className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold">{trip.driver}</p>
+                      <p className="font-semibold">{trip.driverId}</p>
                       <div className="flex items-center gap-1">
                         <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm text-muted-foreground">{trip.rating}</span>
+                        <span className="text-sm text-muted-foreground">4,8</span>
                       </div>
                     </div>
                   </div>
                   <Badge variant="secondary" className="text-xs">
-                    {trip.seats} {trip.seats === 1 ? "lugar" : "lugares"}
+                    {trip.availableSeats} {trip.availableSeats === 1 ? "lugar" : "lugares"}
                   </Badge>
                 </div>
 
                 <div className="space-y-2 mb-3">
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="w-4 h-4 text-primary" />
-                    <span className="font-medium">{trip.from}</span>
+                    <span className="font-medium">{trip.origin}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <MapPin className="w-4 h-4 text-secondary" />
-                    <span className="font-medium">{trip.to}</span>
+                    <span className="font-medium">{trip.destination}</span>
                   </div>
                 </div>
 
@@ -161,7 +170,7 @@ export function HomeScreen({ userType, onNavigate }: HomeScreenProps) {
                   </div>
                   <div className="flex items-center gap-1 text-lg font-bold text-primary">
                     <DollarSign className="w-5 h-5" />
-                    <span>{trip.price.toLocaleString()}</span>
+                    <span>{trip.pricePerPerson.toLocaleString()}</span>
                   </div>
                 </div>
               </Card>
