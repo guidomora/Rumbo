@@ -77,8 +77,9 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
 
   const originMapRef = useRef(null);
   const destinationMapRef = useRef(null);
-  const originMapInstance = useRef(null);
-  const destinationMapInstance = useRef(null);
+ const originMapInstance = useRef<google.maps.Map | null>(null);
+const destinationMapInstance = useRef<google.maps.Map | null>(null);
+
 
   // ✅ Cargar viajes desde el backend
 
@@ -120,9 +121,14 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
   }, [showOriginMap, showDestinationMap]);
 
   
-  const initMap = (container, setValue, onSelect, placeholder) => {
+  const initMap = (
+    container: HTMLDivElement,
+    setValue: (val: string) => void,
+    onSelect: () => void,
+    placeholder: string
+  ) => {
     const map = new google.maps.Map(container, {
-      center: { lat: -34.6037, lng: -58.3816 }, // Buenos Aires
+      center: { lat: -34.6037, lng: -58.3816 }, 
       zoom: 12,
     });
 
@@ -143,22 +149,22 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
     const autocomplete = new google.maps.places.Autocomplete(input);
     autocomplete.bindTo("bounds", map);
 
-    // Si el usuario selecciona un lugar desde el autocompletado
     autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace();
       if (!place.geometry) return;
-      map.panTo(place.geometry.location);
-      marker.setPosition(place.geometry.location);
-      const formatted = place.formatted_address || input.value;
-      setValue(formatted);
-      onSelect(); // cerrar mapa
+      if(place.geometry?.location){
+        map.panTo(place.geometry.location);
+        marker.setPosition(place.geometry.location);
+        const formatted = place.formatted_address || input.value;
+        setValue(formatted);
+        onSelect(); // cerrar mapa
+      }
     });
 
-    // Si el usuario hace clic en el mapa
-    map.addListener("click", (e) => {
+    map.addListener("click", (e: google.maps.MapMouseEvent) => {
       marker.setPosition(e.latLng);
       geocoder.geocode({ location: e.latLng }, (results, status) => {
-        if (status === "OK" && results[0]) {
+        if (status === "OK" && results && results.length > 0) {
           const formatted = results[0].formatted_address;
           setValue(formatted);
           input.value = formatted;
@@ -235,7 +241,8 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
                         const geocoder = new google.maps.Geocoder();
 
                         geocoder.geocode({ location: latLng }, (results, status) => {
-                          if (status === "OK" && results[0]) {
+                          
+                          if (status === "OK" && results && results?.length>0) {
                             let generalLocation = "";
 
                             for (const result of results) {
@@ -312,7 +319,7 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
                         const geocoder = new google.maps.Geocoder();
 
                         geocoder.geocode({ location: latLng }, (results, status) => {
-                          if (status === "OK" && results[0]) {
+                          if (status === "OK" && results && results?.length>0) {
                             let generalLocation = "";
 
                             for (const result of results) {
