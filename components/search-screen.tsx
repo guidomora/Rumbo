@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Switch } from "@/components/ui/switch"
+import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api"
 
 
 interface Trip {
@@ -65,6 +66,19 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isMapLoaded, setIsMapLoaded] = useState(false)
+
+  //coordenadas random de bsas, despues cambiar
+  const center = { lat: -34.6037, lng: -58.3816 }
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
+  const [showOriginMap, setShowOriginMap] = useState(false);
+  const [showDestinationMap, setShowDestinationMap] = useState(false);
+
+  const originMapRef = useRef(null);
+  const destinationMapRef = useRef(null);
+  const originMapInstance = useRef(null);
+  const destinationMapInstance = useRef(null);
 
   // ✅ Cargar viajes desde el backend
 
@@ -84,6 +98,77 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
 
     fetchTrips()
   }, [])
+
+    useEffect(() => {
+    if (showOriginMap && originMapRef.current && !originMapInstance.current) {
+      originMapInstance.current = initMap(
+        originMapRef.current,
+        setOrigin,
+        () => setShowOriginMap(false), // cerrar mapa origen
+        "Buscar origen..."
+      );
+    }
+
+    if (showDestinationMap && destinationMapRef.current && !destinationMapInstance.current) {
+      destinationMapInstance.current = initMap(
+        destinationMapRef.current,
+        setDestination,
+        () => setShowDestinationMap(false), // cerrar mapa destino
+        "Buscar destino..."
+      );
+    }
+  }, [showOriginMap, showDestinationMap]);
+
+  
+  const initMap = (container, setValue, onSelect, placeholder) => {
+    const map = new google.maps.Map(container, {
+      center: { lat: -34.6037, lng: -58.3816 }, // Buenos Aires
+      zoom: 12,
+    });
+
+    const marker = new google.maps.Marker({
+      map,
+      draggable: true,
+    });
+
+    const geocoder = new google.maps.Geocoder();
+    const input = document.createElement("input");
+    input.placeholder = placeholder;
+    input.type = "text";
+    input.style.cssText =
+      "width: 90%; margin: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 6px;";
+
+    map.controls[google.maps.ControlPosition.TOP_CENTER].push(input);
+
+    const autocomplete = new google.maps.places.Autocomplete(input);
+    autocomplete.bindTo("bounds", map);
+
+    // Si el usuario selecciona un lugar desde el autocompletado
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry) return;
+      map.panTo(place.geometry.location);
+      marker.setPosition(place.geometry.location);
+      const formatted = place.formatted_address || input.value;
+      setValue(formatted);
+      onSelect(); // cerrar mapa
+    });
+
+    // Si el usuario hace clic en el mapa
+    map.addListener("click", (e) => {
+      marker.setPosition(e.latLng);
+      geocoder.geocode({ location: e.latLng }, (results, status) => {
+        if (status === "OK" && results[0]) {
+          const formatted = results[0].formatted_address;
+          setValue(formatted);
+          input.value = formatted;
+          onSelect(); // cerrar mapa
+        }
+      });
+    });
+
+    return map;
+  };
 
   // Función para normalizar cadenas eliminando tildes
   const normalizeString = (str: string) => {
@@ -114,35 +199,185 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
         </div>
 
         {/* Search Inputs */}
-        <div className="space-y-2">
-          <div className="relative">
-            <MapPin className="absolute left-3 top-3 h-4 w-4 text-primary" />
-            <Input
-              placeholder="Origen"
-              className="pl-10"
-              value={searchFilters.origin}
-              onChange={(e) => setSearchFilters({ ...searchFilters, origin: e.target.value })}
-            />
-          </div>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-3 h-4 w-4 text-secondary" />
-            <Input
-              placeholder="Destino"
-              className="pl-10"
-              value={searchFilters.destination}
-              onChange={(e) => setSearchFilters({ ...searchFilters, destination: e.target.value })}
-            />
-          </div>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <div className="space-y-2">
+            {/* ORIGEN */}
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 h-4 w-4 text-primary" />
               <Input
-                type="date"
+                placeholder="Origen"
                 className="pl-10"
-                value={searchFilters.date}
-                onChange={(e) => setSearchFilters({ ...searchFilters, date: e.target.value })}
+                value={searchFilters.origin}
+                onChange={(e) =>
+                  setSearchFilters({ ...searchFilters, origin: e.target.value })
+                }
+                onFocus={() => {
+                  setShowOriginMap(true);
+                  setShowDestinationMap(false);
+                }}
               />
+
+              {showOriginMap && (
+                <div className="mt-3" style={{ height: "350px", width: "100%" }}>
+                  <LoadScript
+                    googleMapsApiKey="AIzaSyD_Ms_mWsr5B57C_sXg10Von2ryohtGfKo"
+                    onLoad={() => setIsMapLoaded(true)}
+                  >
+                    <GoogleMap
+                      mapContainerStyle={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "12px",
+                      }}
+                      center={center}
+                      zoom={12}
+                      onClick={(e) => {
+                        const latLng = e.latLng;
+                        const geocoder = new google.maps.Geocoder();
+
+                        geocoder.geocode({ location: latLng }, (results, status) => {
+                          if (status === "OK" && results[0]) {
+                            let generalLocation = "";
+
+                            for (const result of results) {
+                              const barrio = result.address_components.find(comp => comp.types.includes("neighborhood") || comp.types.includes("sublocality_level_1"));
+                              if (barrio){
+                                generalLocation = barrio.long_name;
+                                break;
+                              }
+                            }
+
+                            if (!generalLocation){
+                              for(const result of results){
+                                const admin2 = result.address_components.find(comp =>
+                                comp.types.includes("administrative_area_level_2")
+                              );
+                              if(admin2){
+                                generalLocation = admin2.long_name;
+                                break;
+                              }
+                              }
+                            }
+
+                            if (!generalLocation) {
+                              const locality = results[0].address_components.find(comp =>
+                                comp.types.includes("locality")
+                              );
+                              generalLocation = locality ? locality.long_name : results[0].formatted_address;
+                            }
+
+                            setSearchFilters(prev => ({ ...prev, origin: generalLocation }));
+                            setShowOriginMap(false);
+                            setShowDestinationMap(true);
+                          }
+                        });
+                      }}>
+                    </GoogleMap>
+                  </LoadScript>
+                </div>
+              )}
             </div>
+
+            {/* DESTINO */}
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 h-4 w-4 text-secondary" />
+              <Input
+                placeholder="Destino"
+                className="pl-10"
+                value={searchFilters.destination}
+                onChange={(e) =>
+                  setSearchFilters({ ...searchFilters, destination: e.target.value })
+                }
+                onFocus={() => {
+                  setShowDestinationMap(true);
+                  setShowOriginMap(false);
+                }}
+              />
+
+              {showDestinationMap && (
+                <div className="mt-3" style={{ height: "350px", width: "100%" }}>
+                  <LoadScript
+                    googleMapsApiKey="AIzaSyD_Ms_mWsr5B57C_sXg10Von2ryohtGfKo"
+                    onLoad={() => setIsMapLoaded(true)}
+                  >
+                    <GoogleMap
+                      mapContainerStyle={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "12px",
+                      }}
+                      zoom={12}
+                      center={center}
+                      onClick={(e) => {
+                        const latLng = e.latLng;
+                        const geocoder = new google.maps.Geocoder();
+
+                        geocoder.geocode({ location: latLng }, (results, status) => {
+                          if (status === "OK" && results[0]) {
+                            let generalLocation = "";
+
+                            for (const result of results) {
+                              const barrio = result.address_components.find(comp => comp.types.includes("neighborhood") || comp.types.includes("sublocality_level_1"));
+                              if (barrio){
+                                generalLocation = barrio.long_name;
+                                break;
+                              }
+                            }
+
+                            if (!generalLocation){
+                              for(const result of results){
+                                const admin2 = result.address_components.find(comp =>
+                                comp.types.includes("administrative_area_level_2")
+                              );
+                              if(admin2){
+                                generalLocation = admin2.long_name;
+                                break;
+                              }
+                              }
+                            }
+
+                            if (!generalLocation) {
+                              const locality = results[0].address_components.find(comp =>
+                                comp.types.includes("locality")
+                              );
+                              generalLocation = locality ? locality.long_name : results[0].formatted_address;
+                            }
+
+                            setSearchFilters(prev => ({ ...prev, destination: generalLocation }));
+                            setShowDestinationMap(false);
+                          }
+                        });
+                      }}
+
+                    >
+                    </GoogleMap>
+                  </LoadScript>
+                </div>
+              )}
+            </div>
+
+            {/* FECHA */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="date"
+                  className="pl-10"
+                  value={searchFilters.date}
+                  onFocus={(e) => {
+                    // cerrar mapas
+                    setShowOriginMap(false);
+                    setShowDestinationMap(false);
+
+                    const input = e.target;
+                    requestAnimationFrame(() => input.focus());
+                  }}
+                  onChange={(e) =>
+                    setSearchFilters({ ...searchFilters, date: e.target.value })
+                  }
+                />
+              </div>
+
+
 
             {/* Sheet de filtros */}
             <Sheet>
