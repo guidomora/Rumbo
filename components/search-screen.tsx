@@ -211,7 +211,7 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
               <MapPin className="absolute left-3 top-3 h-4 w-4 text-primary" />
               <Input
                 placeholder="Origen"
-                className="pl-10"
+                className="pl-10 transition-all border hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/30"
                 value={searchFilters.origin}
                 onChange={(e) =>
                   setSearchFilters({ ...searchFilters, origin: e.target.value })
@@ -236,6 +236,14 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
                       }}
                       center={center}
                       zoom={12}
+                        options={{
+                          disableDefaultUI: true,     
+                          zoomControl: true,          
+                          mapTypeControl: false,      
+                          streetViewControl: false,  
+                          fullscreenControl: false,   
+                          clickableIcons: false,      
+                        }}
                       onClick={(e) => {
                         const latLng = e.latLng;
                         const geocoder = new google.maps.Geocoder();
@@ -289,7 +297,7 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
               <MapPin className="absolute left-3 top-3 h-4 w-4 text-secondary" />
               <Input
                 placeholder="Destino"
-                className="pl-10"
+                className="pl-10 transition-all border hover:border-primary focus:border-primary focus:ring-2 focus:ring-primary/30"
                 value={searchFilters.destination}
                 onChange={(e) =>
                   setSearchFilters({ ...searchFilters, destination: e.target.value })
@@ -313,6 +321,14 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
                         borderRadius: "12px",
                       }}
                       zoom={12}
+                      options={{
+                          disableDefaultUI: true,     
+                          zoomControl: true,          
+                          mapTypeControl: false,      
+                          streetViewControl: false,  
+                          fullscreenControl: false,   
+                          clickableIcons: false,      
+                        }}
                       center={center}
                       onClick={(e) => {
                         const latLng = e.latLng;
