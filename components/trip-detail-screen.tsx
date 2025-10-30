@@ -64,8 +64,13 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
       return;
     }
 
+    if (!userId) {
+      alert("Debes iniciar sesión para reservar un lugar")
+      return
+    }
+
     try {
-      const response = await fetch(`http://localhost:3000/api/trips/${tripId}/select`, {
+      const response = await fetch(`http://localhost:3001/api/trips/${tripId}/select`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -73,12 +78,21 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
         body: JSON.stringify({ userId, seats }),
       });
 
-      if (!response.ok) throw new Error("Error al reservar el lugar");
+      if (!response.ok) {
+        let msg = "Error al reservar el lugar"
+        try {
+          const errBody = await response.json()
+          msg = errBody.message || errBody.error || msg
+        } catch (e) {
+          // ignore parse errors
+        }
+        throw new Error(msg)
+      }
 
-      alert("Lugar reservado con éxito");
+      alert("Lugar reservado con éxito")
     } catch (error) {
       console.error(error);
-      alert("Hubo un problema al reservar el lugar");
+      alert(error instanceof Error ? error.message : "Hubo un problema al reservar el lugar")
     }
   };
 

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react"
 
 interface HomeScreenProps {
   userType: "passenger" | "driver"
+  userName?: string | null
   onNavigate: (screen: "search" | "create" | "profile") => void
 }
 
@@ -31,7 +32,7 @@ interface Trip {
 
 
 
-export function HomeScreen({ userType, onNavigate }: HomeScreenProps) {
+export function HomeScreen({ userType, userName, onNavigate }: HomeScreenProps) {
 
   const [trips, setTrips] = useState<Trip[] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -40,7 +41,7 @@ export function HomeScreen({ userType, onNavigate }: HomeScreenProps) {
   useEffect(() => {
       const fetchTrips = async () => {
         try {
-          const res = await fetch("http://localhost:3000/api/trips")
+          const res = await fetch("http://localhost:3001/api/trips")
           if (!res.ok) throw new Error("Error al obtener los viajes")
           const data = await res.json()
           setTrips(data.data || [])
@@ -60,7 +61,7 @@ export function HomeScreen({ userType, onNavigate }: HomeScreenProps) {
       <div className="bg-gradient-to-r from-primary to-secondary p-6 text-primary-foreground">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold">Hola, Juan 👋</h2>
+            <h2 className="text-2xl font-bold">{userName ? `Hola ${userName} 👋` : "Hola 👋"}</h2>
             <p className="text-sm opacity-90">{userType === "driver" ? "Conductor verificado" : "Pasajero"}</p>
           </div>
           <Button
@@ -124,7 +125,7 @@ export function HomeScreen({ userType, onNavigate }: HomeScreenProps) {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Viajes disponibles</h3>
-            <Button variant="link" className="text-sm p-0 h-auto">
+            <Button variant="link" className="text-sm p-0 h-auto" onClick={() => onNavigate("search")}>
               Ver todos
             </Button>
           </div>

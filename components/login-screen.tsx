@@ -19,10 +19,19 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userType, setUserType] = useState<"passenger" | "driver" | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  
+  // Estados para el formulario de registro
+  const [registerData, setRegisterData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    dni: ""
+  })
 
   const handleLogin = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/users/login", {
+      const response = await fetch("http://localhost:3001/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -40,6 +49,66 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     } catch (error) {
       console.error("Error al iniciar sesión:", error)
       alert("Hubo un problema al iniciar sesión")
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    // try to use current email input, otherwise ask
+    const emailToUse = email || registerData.email || window.prompt("Ingrese su email para recuperar la contraseña:")
+    if (!emailToUse) {
+      alert("Por favor ingresá un email válido")
+      return
+    }
+
+    try {
+      const res = await fetch("http://localhost:3001/api/users/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailToUse }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.message || "Error al solicitar recuperación de contraseña")
+      }
+
+      alert("Si el email existe en nuestro sistema, recibirás instrucciones para restablecer la contraseña.")
+    } catch (err: any) {
+      console.error(err)
+      alert(err.message || "Hubo un error al solicitar la recuperación")
+    }
+  }
+
+  const handleRegister = async () => {
+    try {
+      const response = await fetch("http://localhost:3001/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(registerData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Error al registrar usuario")
+      }
+
+      const data = await response.json()
+      setUserId(data.user.id)
+      alert("¡Registro exitoso! Ahora puedes iniciar sesión.")
+      
+      // Limpiar el formulario
+      setRegisterData({
+        name: "",
+        email: "",
+        phone: "",
+        password: "",
+        dni: ""
+      })
+    } catch (error) {
+      console.error("Error al registrar:", error)
+      alert(error instanceof Error ? error.message : "Hubo un problema al registrar el usuario")
     }
   }
 
@@ -121,9 +190,14 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
                 )}
               </div>
             ) : (
-              <Button onClick={handleLogin} className="w-full h-12" size="lg">
-                Ingresar
-              </Button>
+              <>
+                <Button onClick={handleLogin} className="w-full h-12" size="lg">
+                  Ingresar
+                </Button>
+                <Button variant="link" className="w-full mt-2 text-center" onClick={handleForgotPassword}>
+                  ¿Olvidaste tu contraseña?
+                </Button>
+              </>
             )}
           </TabsContent>
 
@@ -132,7 +206,13 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="name">Nombre completo</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="name" placeholder="Juan Pérez" className="pl-10" />
+                <Input 
+                  id="name" 
+                  placeholder="Juan Pérez" 
+                  className="pl-10"
+                  value={registerData.name}
+                  onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                />
               </div>
             </div>
 
@@ -140,7 +220,14 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="reg-email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="reg-email" type="email" placeholder="tu@email.com" className="pl-10" />
+                <Input 
+                  id="reg-email" 
+                  type="email" 
+                  placeholder="tu@email.com" 
+                  className="pl-10"
+                  value={registerData.email}
+                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                />
               </div>
             </div>
 
@@ -148,7 +235,14 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="phone">Teléfono</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="phone" type="tel" placeholder="+54 9 11 1234-5678" className="pl-10" />
+                <Input 
+                  id="phone" 
+                  type="tel" 
+                  placeholder="+54 9 11 1234-5678" 
+                  className="pl-10"
+                  value={registerData.phone}
+                  onChange={(e) => setRegisterData({ ...registerData, phone: e.target.value })}
+                />
               </div>
             </div>
 
@@ -156,7 +250,13 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="dni">DNI</Label>
               <div className="relative">
                 <CreditCard className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="dni" placeholder="12.345.678" className="pl-10" />
+                <Input 
+                  id="dni" 
+                  placeholder="12.345.678" 
+                  className="pl-10"
+                  value={registerData.dni}
+                  onChange={(e) => setRegisterData({ ...registerData, dni: e.target.value })}
+                />
               </div>
             </div>
 
@@ -164,12 +264,23 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
               <Label htmlFor="reg-password">Contraseña</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="reg-password" type="password" placeholder="••••••••" className="pl-10" />
+                <Input 
+                  id="reg-password" 
+                  type="password" 
+                  placeholder="••••••••" 
+                  className="pl-10"
+                  value={registerData.password}
+                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                />
               </div>
             </div>
 
             <div className="space-y-3 pt-4">
-              <Button onClick={() => onLogin("passenger", userId)} className="w-full h-12" size="lg">
+              <Button 
+                onClick={handleRegister} 
+                className="w-full h-12" 
+                size="lg"
+              >
                 Crear cuenta
               </Button>
             </div>
