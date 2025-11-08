@@ -49,9 +49,10 @@ interface TripDetailsProps {
 interface SearchScreenProps {
   onBack: () => void
   onSelectTrip: (trip: Trip) => void
+  userId: string
 }
 
-export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
+export function SearchScreen({ onBack, onSelectTrip, userId }: SearchScreenProps) {
   const [filters, setFilters] = useState({
     music: false,
     pets: false,
@@ -64,6 +65,7 @@ export function SearchScreen({ onBack, onSelectTrip }: SearchScreenProps) {
     date: "",
   });
   const [trips, setTrips] = useState<Trip[]>([])
+  const [lastTrip, setLastTrip] = useState<Trip | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
@@ -86,10 +88,21 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/trips")
-        if (!res.ok) throw new Error("Error al obtener los viajes")
-        const data = await res.json()
-        setTrips(data.data || [])
+        // Obtener todos los viajes
+        const tripsRes = await fetch("http://localhost:3000/api/trips")
+        if (!tripsRes.ok) throw new Error("Error al obtener los viajes")
+        const tripsData = await tripsRes.json()
+        
+        // Obtener el último viaje realizado
+        const lastTripRes = await fetch(`http://localhost:3000/api/trips/users/${userId}/last`)
+        if (lastTripRes.ok) {
+          const lastTripData = await lastTripRes.json()
+          if (lastTripData.data) {
+            setLastTrip(lastTripData.data)
+          }
+        }
+        
+        setTrips(tripsData.data || [])
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -181,17 +194,26 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
     return str.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
   };
 
-  // ✅ Aplicar filtros
-  const filteredTrips = trips.filter((trip) => {
-    if (filters.music && !trip.music) return false;
-    if (filters.pets && !trip.pets) return false;
-    if (filters.kids && !trip.children) return false;
-    if (filters.luggage && !trip.luggage) return false;
-    if (searchFilters.origin && !normalizeString(trip.origin).includes(normalizeString(searchFilters.origin))) return false;
-    if (searchFilters.destination && !normalizeString(trip.destination).includes(normalizeString(searchFilters.destination))) return false;
-    if (searchFilters.date && trip.date !== searchFilters.date) return false;
-    return true;
-  });
+  // Filtros
+  const filteredTrips = trips
+    .filter((trip) => {
+      if (filters.music && !trip.music) return false;
+      if (filters.pets && !trip.pets) return false;
+      if (filters.kids && !trip.children) return false;
+      if (filters.luggage && !trip.luggage) return false;
+      if (searchFilters.origin && !normalizeString(trip.origin).includes(normalizeString(searchFilters.origin))) return false;
+      if (searchFilters.destination && !normalizeString(trip.destination).includes(normalizeString(searchFilters.destination))) return false;
+      if (searchFilters.date && trip.date !== searchFilters.date) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      // Si alguno de los viajes es el último viaje realizado, ponerlo primero
+      if (lastTrip) {
+        if (a.id === lastTrip.id) return -1;
+        if (b.id === lastTrip.id) return 1;
+      }
+      return 0;
+    });
 
   return (
     <div className="h-[800px] flex flex-col bg-background">
@@ -414,7 +436,7 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
                   <SheetTitle>Filtros de búsqueda</SheetTitle>
                   <SheetDescription>Personalizá tu búsqueda según tus preferencias</SheetDescription>
                 </SheetHeader>
-                <div className="space-y-6 mt-6">
+                <div className="space-y-6 mt-6 ml-5">
                   {[
                     { id: "music", label: "Música durante el viaje", icon: Music },
                     { id: "pets", label: "Acepta mascotas", icon: Dog },
@@ -472,9 +494,16 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
                         </div>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {trip.availableSeats} {trip.availableSeats === 1 ? "lugar" : "lugares"}
-                    </Badge>
+                    <div className="flex gap-2">
+                      {lastTrip && trip.id === lastTrip.id && (
+                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                          Último viaje
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="text-xs">
+                        {trip.availableSeats} {trip.availableSeats === 1 ? "lugar" : "lugares"}
+                      </Badge>
+                    </div>
                   </div>
 
                   <div className="space-y-2 mb-3">

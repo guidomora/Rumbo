@@ -1,13 +1,19 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, User, Star, MapPin, Calendar, Settings, Shield, Award, Car, DollarSign, Edit } from "lucide-react"
+import { useToast } from "@/components/ui/toast"
 
 interface ProfileScreenProps {
   onBack: () => void
   userType: "passenger" | "driver"
+  onLogout: () => void
+  userId?: string | null
 }
 
 const tripHistory = [
@@ -37,7 +43,82 @@ const tripHistory = [
   },
 ]
 
-export function ProfileScreen({ onBack, userType }: ProfileScreenProps) {
+export function ProfileScreen({ onBack, userType, onLogout, userId }: ProfileScreenProps) {
+  const [editing, setEditing] = useState(false)
+
+  // editable fields
+  const [fullName, setFullName] = useState<string>("")
+  const [about, setAbout] = useState<string>(
+    "Estudiante de UADE, viajo todos los días desde Olavarría. Me gusta la música y conversar durante el viaje.\nSiempre puntual!"
+  )
+  const [vehicle, setVehicle] = useState<string>("Toyota Corolla")
+  const [vehicleDetails, setVehicleDetails] = useState<string>("2020 • Blanco • ABC 123")
+
+  // backups for cancel
+  const [backup, setBackup] = useState({ fullName: "", about: "", vehicle: "", vehicleDetails: "" })
+
+  const [loadingUser, setLoadingUser] = useState(false)
+  const [userError, setUserError] = useState<string | null>(null)
+  const { showToast } = useToast()
+
+  useEffect(() => {
+    if (!userId) return
+    const fetchUser = async () => {
+      setLoadingUser(true)
+      try {
+        const res = await fetch(`http://localhost:3000/api/users/${userId}`)
+        if (!res.ok) throw new Error("Error al obtener datos de usuario")
+        const data = await res.json()
+        const user = data.user || data.data || {}
+        if (user.fullName) setFullName(user.fullName)
+        if (user.about) setAbout(user.about)
+        if (user.vehicle) setVehicle(user.vehicle)
+        if (user.vehicleDetails) setVehicleDetails(user.vehicleDetails)
+      } catch (err: any) {
+        setUserError(err.message)
+      } finally {
+        setLoadingUser(false)
+      }
+    }
+
+    fetchUser()
+  }, [userId])
+
+  const startEdit = () => {
+    setBackup({ fullName, about, vehicle, vehicleDetails })
+    setEditing(true)
+  }
+
+  const handleCancel = () => {
+    setFullName(backup.fullName)
+    setAbout(backup.about)
+    setVehicle(backup.vehicle)
+    setVehicleDetails(backup.vehicleDetails)
+    setEditing(false)
+  }
+
+  const handleSave = async () => {
+    if (!userId) {
+      showToast("User ID ausente", "error")
+      return
+    }
+    try {
+      const res = await fetch(`http://localhost:3000/api/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, about, vehicle, vehicleDetails }),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.message || "Error al guardar perfil")
+      }
+      showToast("Perfil actualizado correctamente", "success")
+      setEditing(false)
+    } catch (err: any) {
+      showToast(err.message || "Error al guardar", "error")
+    }
+  }
+
   return (
     <div className="h-[800px] flex flex-col bg-background">
       {/* Header */}
@@ -56,11 +137,19 @@ export function ProfileScreen({ onBack, userType }: ProfileScreenProps) {
           </Button>
         </div>
 
-        <div className="flex flex-col items-center text-center">
+          <div className="flex flex-col items-center text-center">
           <div className="w-24 h-24 bg-primary-foreground/20 rounded-full flex items-center justify-center mb-4">
             <User className="w-12 h-12" />
           </div>
-          <h2 className="text-2xl font-bold mb-1">Juan Pérez</h2>
+          {editing ? (
+            <Input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="text-center text-2xl font-bold mb-1"
+            />
+          ) : (
+            <h2 className="text-2xl font-bold mb-1">{fullName}</h2>
+          )}
           <p className="text-sm opacity-90 mb-3">{userType === "driver" ? "Conductor verificado" : "Pasajero"}</p>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-primary-foreground/20 text-primary-foreground border-0">
@@ -110,16 +199,17 @@ export function ProfileScreen({ onBack, userType }: ProfileScreenProps) {
       <div className="flex-1 overflow-auto px-6 space-y-6">
         {/* About */}
         <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold">Sobre mí</h3>
-            <Button variant="ghost" size="sm">
-              <Edit className="w-4 h-4" />
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Estudiante de UADE, viajo todos los días desde Olavarría. Me gusta la música y conversar durante el viaje.
-            Siempre puntual!
-          </p>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold">Sobre mí</h3>
+              <Button variant="ghost" size="sm" onClick={startEdit}>
+                <Edit className="w-4 h-4" />
+              </Button>
+            </div>
+            {editing ? (
+              <Textarea value={about} onChange={(e) => setAbout(e.target.value)} className="text-sm text-muted-foreground" />
+            ) : (
+              <p className="text-sm text-muted-foreground">{about}</p>
+            )}
         </Card>
 
         {/* Vehicle (if driver) */}
@@ -127,7 +217,7 @@ export function ProfileScreen({ onBack, userType }: ProfileScreenProps) {
           <Card className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold">Mi vehículo</h3>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={startEdit}>
                 <Edit className="w-4 h-4" />
               </Button>
             </div>
@@ -136,8 +226,17 @@ export function ProfileScreen({ onBack, userType }: ProfileScreenProps) {
                 <Car className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="font-medium">Toyota Corolla</p>
-                <p className="text-sm text-muted-foreground">2020 • Blanco • ABC 123</p>
+                {editing ? (
+                  <div>
+                    <Input value={vehicle} onChange={(e) => setVehicle(e.target.value)} className="font-medium" />
+                    <Input value={vehicleDetails} onChange={(e) => setVehicleDetails(e.target.value)} className="text-sm text-muted-foreground mt-1" />
+                  </div>
+                ) : (
+                  <>
+                    <p className="font-medium">{vehicle}</p>
+                    <p className="text-sm text-muted-foreground">{vehicleDetails}</p>
+                  </>
+                )}
               </div>
             </div>
           </Card>
@@ -214,14 +313,28 @@ export function ProfileScreen({ onBack, userType }: ProfileScreenProps) {
       </div>
 
       {/* Actions */}
-      <div className="p-6 border-t border-border bg-card space-y-2">
-        <Button variant="outline" className="w-full bg-transparent">
-          Editar perfil
-        </Button>
-        <Button variant="ghost" className="w-full text-destructive">
-          Cerrar sesión
-        </Button>
+  <div className="mt-5 p-6 border-t border-border bg-card space-y-2">
+        {editing ? (
+          <div className="space-y-2">
+            <Button className="w-full h-12" onClick={handleSave}>
+              Guardar cambios
+            </Button>
+            <Button variant="ghost" className="w-full text-muted-foreground" onClick={handleCancel}>
+              Cancelar
+            </Button>
+          </div>
+        ) : (
+          <>
+            <Button variant="outline" className="w-full bg-transparent" onClick={startEdit}>
+              Editar perfil
+            </Button>
+            <Button variant="ghost" className="w-full text-destructive" onClick={onLogout}>
+              Cerrar sesión
+            </Button>
+          </>
+        )}
       </div>
+      
     </div>
   )
 }

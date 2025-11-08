@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { useToast } from "@/components/ui/toast"
 import {
   ArrowLeft,
   MapPin,
@@ -51,6 +52,8 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
     console.log("Reserving seats for trip ID:", trip);
     console.log("User ID:", userId);
 
+  const { showToast } = useToast()
+
   //COMENTO CAMBIO PARA VER SI FUNCIONA TRIP
   //const params = useParams();
   //const tripId = params.id;
@@ -60,8 +63,13 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
 
     console.log("Reserving seats for trip ID:", tripId);
     if (!tripId) {
-      alert("ID del viaje no encontrado");
+      showToast("ID del viaje no encontrado", "error")
       return;
+    }
+
+    if (!userId) {
+      showToast("Debes iniciar sesión para reservar un lugar", "error")
+      return
     }
 
     try {
@@ -73,12 +81,21 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
         body: JSON.stringify({ userId, seats }),
       });
 
-      if (!response.ok) throw new Error("Error al reservar el lugar");
+      if (!response.ok) {
+        let msg = "Error al reservar el lugar"
+        try {
+          const errBody = await response.json()
+          msg = errBody.message || errBody.error || msg
+        } catch (e) {
+          // ignore parse errors
+        }
+        throw new Error(msg)
+      }
 
-      alert("Lugar reservado con éxito");
+      showToast("Lugar reservado con éxito", "success")
     } catch (error) {
       console.error(error);
-      alert("Hubo un problema al reservar el lugar");
+      showToast(error instanceof Error ? error.message : "Hubo un problema al reservar el lugar", "error")
     }
   };
 
@@ -269,6 +286,7 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
           </Button>
         </div>
       )}
+      
     </div>
   )
 }
