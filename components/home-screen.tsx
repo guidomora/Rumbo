@@ -10,7 +10,7 @@ import { useEffect, useState } from "react"
 interface HomeScreenProps {
   userType: "passenger" | "driver"
   userName?: string | null
-  onNavigate: (screen: "search" | "create" | "profile") => void
+  onNavigate: (screen: "search" | "create" | "profile"|"my-trips") => void
 }
 
 interface Trip {
@@ -194,6 +194,10 @@ export function HomeScreen({ userType, userName, onNavigate }: HomeScreenProps) 
           <Button variant="ghost" className="flex-col h-16 gap-1" onClick={() => onNavigate("profile")}>
             <User className="h-5 w-5" />
             <span className="text-xs">Perfil</span>
+          </Button>
+          <Button variant="ghost" className="flex-col h-16 gap-1" onClick={() => onNavigate("my-trips")}>
+            <User className="h-5 w-5" />
+            <span className="text-xs">Mis Viajes</span>
           </Button>
         </div>
       </div>
