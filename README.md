@@ -9,8 +9,8 @@ Este repositorio contiene el **frontend (MVP)** del proyecto, desarrollado con *
 
 ### 1️⃣ Clonar el repositorio
 ```bash
-git clone https://github.com/tuusuario/rumbo.git
-cd rumbo
+https://github.com/guidomora/Rumbo
+cd Rumbo
 ```
 
 ### 2️⃣ Instalar dependencias
