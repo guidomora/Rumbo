@@ -58,7 +58,7 @@ export function HomeScreen({ userType, userName, onNavigate }: HomeScreenProps) 
   return (
     <div className="h-[800px] flex flex-col bg-background">
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-secondary p-6 text-primary-foreground">
+      <div className="bg-linear-to-r from-primary to-secondary p-6 text-primary-foreground">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold">{userName ? `Hola ${userName} 👋` : "Hola 👋"}</h2>
