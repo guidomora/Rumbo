@@ -4,15 +4,15 @@ import type { RouteProp } from "@react-navigation/native"
 
 import HomeScreen from "../screens/HomeScreen"
 import SearchScreen from "../screens/SearchScreen"
-import CreateTripScreen from "../screens/CreateTripScreen"
-import ProfileScreen from "../screens/ProfileScreen"
 import { COLORS } from "../constants/theme"
+import React from "react"
+import { SafeAreaView, View, Text, StyleSheet } from "react-native"
 
 export type MainTabParamList = {
-  Home: undefined
+  Home: { userType: "passenger" | "driver" } | undefined
   Search: undefined
   CreateTrip: undefined
-  Profile: undefined
+  Profile: { userType?: "passenger" | "driver"; userId?: string } | undefined
 }
 
 type MainNavigatorProps = {
@@ -21,8 +21,34 @@ type MainNavigatorProps = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>()
 
-export default function MainNavigator({ route }: MainNavigatorProps) {
-  const { userType } = route.params
+const CreateTripScreenLocal = () => (
+  <SafeAreaView style={localStyles.container}>
+    <View style={localStyles.inner}>
+      <Text style={localStyles.title}>Publicar viaje</Text>
+      <Text style={localStyles.subtitle}>Pantalla para crear un viaje (placeholder).</Text>
+    </View>
+  </SafeAreaView>
+)
+
+const ProfileScreenLocal = ({ route }: any) => (
+  <SafeAreaView style={localStyles.container}>
+    <View style={localStyles.inner}>
+      <Text style={localStyles.title}>Perfil</Text>
+      <Text style={localStyles.subtitle}>Tipo: {route?.params?.userType ?? "-"}</Text>
+      <Text style={localStyles.subtitle}>User ID: {route?.params?.userId ?? "no disponible"}</Text>
+    </View>
+  </SafeAreaView>
+)
+
+const localStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  inner: { padding: 16 },
+  title: { fontSize: 20, fontWeight: "700", color: COLORS.text, marginBottom: 8 },
+  subtitle: { fontSize: 16, color: COLORS.textSecondary, marginTop: 4 },
+})
+
+export default function MainNavigator({ route }: any) {
+  const { userType } = route?.params || { userType: undefined }
 
   return (
     <Tab.Navigator
@@ -54,14 +80,14 @@ export default function MainNavigator({ route }: MainNavigatorProps) {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: "Inicio" }} initialParams={{ userType }} />
-      <Tab.Screen name="Search" component={SearchScreen} options={{ tabBarLabel: "Buscar" }} />
+      <Tab.Screen name="Home" component={HomeScreen as any} options={{ tabBarLabel: "Inicio" }} initialParams={{ userType }} />
+      <Tab.Screen name="Search" component={SearchScreen as any} options={{ tabBarLabel: "Buscar" }} />
       {userType === "driver" && (
-        <Tab.Screen name="CreateTrip" component={CreateTripScreen} options={{ tabBarLabel: "Publicar" }} />
+        <Tab.Screen name="CreateTrip" component={CreateTripScreenLocal as any} options={{ tabBarLabel: "Publicar" }} />
       )}
       <Tab.Screen
         name="Profile"
-        component={ProfileScreen}
+        component={ProfileScreenLocal as any}
         options={{ tabBarLabel: "Perfil" }}
         initialParams={{ userType }}
       />
