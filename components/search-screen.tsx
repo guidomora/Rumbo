@@ -247,7 +247,7 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
               {showOriginMap && (
                 <div className="mt-3" style={{ height: "350px", width: "100%" }}>
                   <LoadScript
-                    googleMapsApiKey="AIzaSyD_Ms_mWsr5B57C_sXg10Von2ryohtGfKo"
+                    googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
                     onLoad={() => setIsMapLoaded(true)}
                   >
                     <GoogleMap
@@ -333,7 +333,7 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
               {showDestinationMap && (
                 <div className="mt-3" style={{ height: "350px", width: "100%" }}>
                   <LoadScript
-                    googleMapsApiKey="AIzaSyD_Ms_mWsr5B57C_sXg10Von2ryohtGfKo"
+                    googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
                     onLoad={() => setIsMapLoaded(true)}
                   >
                     <GoogleMap
