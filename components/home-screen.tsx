@@ -37,6 +37,7 @@ export function HomeScreen({ userType, userName, onNavigate }: HomeScreenProps) 
   const [trips, setTrips] = useState<Trip[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [driverNames, setDriverNames] = useState<Record<string, string>>({})
 
   useEffect(() => {
       const fetchTrips = async () => {
@@ -44,7 +45,28 @@ export function HomeScreen({ userType, userName, onNavigate }: HomeScreenProps) 
           const res = await fetch("http://localhost:3000/api/trips")
           if (!res.ok) throw new Error("Error al obtener los viajes")
           const data = await res.json()
-          setTrips(data.data || [])
+          const tripsData = data.data || []
+          setTrips(tripsData)
+
+          const driverIds = [...new Set(tripsData.map((t: Trip) => String(t.driverId)))] as string[]
+
+
+
+          const driverResponses = await Promise.all(
+            driverIds.map((id) =>
+              fetch(`http://localhost:3000/api/users/${id}`).then((r) => r.json())
+            )
+          )
+
+          const namesMap: Record<string, string> = {}
+          driverResponses.forEach((userData, i) => {
+          const user = userData.user
+          namesMap[driverIds[i]] = user?.name || "Cargando..."
+        })
+
+
+          setDriverNames(namesMap)
+
         } catch (err: any) {
           setError(err.message)
         } finally {
@@ -139,7 +161,7 @@ export function HomeScreen({ userType, userName, onNavigate }: HomeScreenProps) 
                       <User className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold">{trip.driverId}</p>
+                      <p className="font-semibold">{driverNames[trip.driverId]|| "Cargando..."}</p>
                       <div className="flex items-center gap-1">
                         <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                         <span className="text-sm text-muted-foreground">4,8</span>
