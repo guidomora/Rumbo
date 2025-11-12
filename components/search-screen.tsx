@@ -69,6 +69,7 @@ export function SearchScreen({ onBack, onSelectTrip, userId }: SearchScreenProps
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isMapLoaded, setIsMapLoaded] = useState(false)
+  const [driverNames, setDriverNames] = useState<Record<string, string>>({})
 
   //coordenadas random de bsas, despues cambiar
   const center = { lat: -34.6037, lng: -58.3816 }
@@ -99,6 +100,17 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
           const lastTripData = await lastTripRes.json()
           if (lastTripData.data) {
             setLastTrip(lastTripData.data)
+            
+            // Obtener el nombre del conductor del último viaje
+            const driverId = lastTripData.data.driverId
+            const driverRes = await fetch(`http://localhost:3000/api/users/${driverId}`)
+            if (driverRes.ok) {
+              const driverData = await driverRes.json()
+              setDriverNames(prev => ({
+                ...prev,
+                [driverId]: driverData.user?.name || "Cargando..."
+              }))
+            }
           }
         }
         
@@ -247,7 +259,7 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
               {showOriginMap && (
                 <div className="mt-3" style={{ height: "350px", width: "100%" }}>
                   <LoadScript
-                    googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
+                    googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY!}
                     onLoad={() => setIsMapLoaded(true)}
                   >
                     <GoogleMap
@@ -333,7 +345,7 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
               {showDestinationMap && (
                 <div className="mt-3" style={{ height: "350px", width: "100%" }}>
                   <LoadScript
-                    googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
+                    googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY!}
                     onLoad={() => setIsMapLoaded(true)}
                   >
                     <GoogleMap
@@ -487,10 +499,10 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
                         <User className="w-6 h-6 text-primary" />
                       </div>
                       <div>
-                        <p className="font-semibold">{trip.driverId}</p>
+                        <p className="font-semibold">{driverNames[trip.driverId] || trip.driverId}</p>
                         <div className="flex items-center gap-2">
                           <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          <span className="text-xs text-muted-foreground">Conductor ID</span>
+                          <span className="text-xs text-muted-foreground">Conductor</span>
                         </div>
                       </div>
                     </div>
@@ -500,9 +512,6 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
                           Último viaje
                         </Badge>
                       )}
-                      <Badge variant="secondary" className="text-xs">
-                        {trip.availableSeats} {trip.availableSeats === 1 ? "lugar" : "lugares"}
-                      </Badge>
                     </div>
                   </div>
 
