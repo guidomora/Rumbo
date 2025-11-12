@@ -44,22 +44,25 @@ export function MyTripsScreen({
 
   // Cargar viajes del chofer
   useEffect(() => {
-    const fetchMyTrips = async () => {
-      try {
-        const res = await fetch(
-          `http://localhost:3000/api/trips?driverId=${userId}`
-        )
-        if (!res.ok) throw new Error("Error al cargar tus viajes")
-        const data = await res.json()
-        setMyTrips(data.data || [])
-      } catch (err: any) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
+  const fetchMyTrips = async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/trips`)
+      if (!res.ok) throw new Error("Error al cargar tus viajes")
+      const data = await res.json()
+
+      // Filtra solo los viajes del chofer logueado
+      const filtered = (data.data || []).filter(
+        (trip: Trip) => trip.driverId === userId
+      )
+      setMyTrips(filtered)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
-    fetchMyTrips()
-  }, [userId])
+  }
+  fetchMyTrips()
+}, [userId])
 
   // Iniciar viaje
   const handleStartTrip = async (tripId: string) => {
