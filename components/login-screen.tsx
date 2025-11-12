@@ -76,7 +76,12 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
       const data = await response.json()
       // Success
       setIsLoggedIn(true) // Marcar como logueado
-      setUserId(data.user?.id ?? null) // Guardar el userId recibido
+      setUserId(data.user?.id ?? null)// Guardar el userId recibido
+
+      if(data.user?.id ?? null){
+        localStorage.setItem("userId", data.user.id)
+      }
+
       showToast("Inicio de sesión exitoso", "success")
     } catch (error: any) {
       console.error("Error al iniciar sesión:", error)

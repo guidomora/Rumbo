@@ -39,7 +39,7 @@ export function CreateTripScreen({ onBack, onComplete }: CreateTripScreenProps) 
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          driverId: "12345", // 🔹 reemplazá esto con el ID real del conductor logueado
+          driverId: localStorage.getItem("userId"), //  ID real del conductor logueado
           origin: formData.origin,
           destination: formData.destination,
           date: formData.date,
