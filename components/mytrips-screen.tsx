@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Clock, DollarSign, ArrowLeft, Play, Flag } from "lucide-react"
+import {Dialog, DialogContent} from "@/components/ui/dialog"
 
 interface MyTripsScreenProps {
   userId: string
@@ -38,7 +39,8 @@ export function MyTripsScreen({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
-  const [actionLoading, setActionLoading] = useState<string | null>(null) // guarda el id del viaje que se está actualizando
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [tripToComplete, setTripToComplete] = useState<string | null>(null)
 
   // Cargar viajes del chofer
   useEffect(() => {
@@ -69,9 +71,8 @@ export function MyTripsScreen({
         { method: "PATCH" }
       )
       if (!res.ok) throw new Error("Error al iniciar el viaje.")
-      const data = await res.json()
+      await res.json()
 
-      // Actualizar estado del viaje localmente
       setMyTrips((prev) =>
         prev.map((trip) =>
           trip.id === tripId ? { ...trip, state: "in_progress" } : trip
@@ -95,9 +96,8 @@ export function MyTripsScreen({
         { method: "PATCH" }
       )
       if (!res.ok) throw new Error("Error al finalizar el viaje.")
-      const data = await res.json()
+      await res.json()
 
-      // Actualizar estado local
       setMyTrips((prev) =>
         prev.map((trip) =>
           trip.id === tripId ? { ...trip, state: "completed" } : trip
@@ -190,7 +190,7 @@ export function MyTripsScreen({
                 {trip.state === "in_progress" && (
                   <Button
                     variant="destructive"
-                    onClick={() => handleCompleteTrip(trip.id)}
+                    onClick={() => setTripToComplete(trip.id)}
                     disabled={actionLoading === trip.id}
                     className="flex-1"
                   >
@@ -205,6 +205,29 @@ export function MyTripsScreen({
           ))
         )}
       </div>
+
+      {/* Modal de confirmación de pago */}
+      <Dialog open={!!tripToComplete} onOpenChange={() => setTripToComplete(null)}>
+        <DialogContent className="sm:max-w-md p-6">
+          <div className="space-y-4 text-center">
+            <h2 className="text-lg font-semibold">💵 No olvides recibir tu pago</h2>
+            <p className="text-sm text-muted-foreground">
+              Antes de finalizar el viaje, asegurate de haber recibido el pago de los pasajeros.
+            </p>
+            <Button
+              onClick={async () => {
+                if (tripToComplete) {
+                  await handleCompleteTrip(tripToComplete)
+                  setTripToComplete(null)
+                }
+              }}
+              className="w-full mt-4"
+            >
+              Ya recibí el pago
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
