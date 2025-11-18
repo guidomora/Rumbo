@@ -46,7 +46,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/users/login", {
+      const response = await fetch("http://rumbo-back-production.up.railway.app/api/users/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -115,7 +115,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
     setForgotLoading(true)
     try {
-      const url = `http://localhost:3000/api/users/${encodeURIComponent(emailToUse)}/password`
+      const url = `http://rumbo-back-production.up.railway.app/api/users/${encodeURIComponent(emailToUse)}/password`
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -138,7 +138,7 @@ export function LoginScreen({ onLogin }: LoginScreenProps) {
 
   const handleRegister = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/users", {
+      const response = await fetch("http://rumbo-back-production.up.railway.app/api/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
