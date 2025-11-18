@@ -63,7 +63,7 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
   useEffect(() => {
     const fetchDriverInfo = async () => {
       try {
-        const response = await fetch(`http://rumbo-back-production.up.railway.app/api/users/${trip.driverId}`)
+        const response = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${trip.driverId}`)
         if (response.ok) {
           const data = await response.json()
           if (data.user?.phone) {
@@ -95,7 +95,7 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
     }
 
     try {
-      const response = await fetch(`http://rumbo-back-production.up.railway.app/api/trips/${tripId}/select`, {
+      const response = await fetch(`https://rumbo-back-production.up.railway.app/api/trips/${tripId}/select`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

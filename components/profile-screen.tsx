@@ -82,7 +82,7 @@ export function ProfileScreen({
     const fetchUser = async () => {
       setLoadingUser(true);
       try {
-        const res = await fetch(`http://rumbo-back-production.up.railway.app/api/users/${userId}`);
+        const res = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${userId}`);
         if (!res.ok) throw new Error("Error al obtener datos de usuario");
         const data = await res.json();
         const user = data.user || data.data || {};
@@ -101,7 +101,7 @@ export function ProfileScreen({
       setLoadingTrips(true);
       try {
         const res = await fetch(
-          `http://rumbo-back-production.up.railway.app/api/trips/users/${userId}`
+          `https://rumbo-back-production.up.railway.app/api/trips/users/${userId}`
         );
         if (!res.ok) throw new Error("Error al obtener viajes");
         const data = await res.json();

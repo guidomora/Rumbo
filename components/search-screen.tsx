@@ -90,12 +90,12 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
     const fetchTrips = async () => {
       try {
         // Obtener todos los viajes
-        const tripsRes = await fetch("http://rumbo-back-production.up.railway.app/api/trips")
+        const tripsRes = await fetch("https://rumbo-back-production.up.railway.app/api/trips")
         if (!tripsRes.ok) throw new Error("Error al obtener los viajes")
         const tripsData = await tripsRes.json()
         
         // Obtener el último viaje realizado
-        const lastTripRes = await fetch(`http://rumbo-back-production.up.railway.app/api/trips/users/${userId}/last`)
+        const lastTripRes = await fetch(`https://rumbo-back-production.up.railway.app/api/trips/users/${userId}/last`)
         if (lastTripRes.ok) {
           const lastTripData = await lastTripRes.json()
           if (lastTripData.data) {
@@ -103,7 +103,7 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
             
             // Obtener el nombre del conductor del último viaje
             const driverId = lastTripData.data.driverId
-            const driverRes = await fetch(`http://rumbo-back-production.up.railway.app/api/users/${driverId}`)
+            const driverRes = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${driverId}`)
             if (driverRes.ok) {
               const driverData = await driverRes.json()
               setDriverNames(prev => ({
