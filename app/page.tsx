@@ -10,6 +10,7 @@ import { TripDetailScreen } from "@/components/trip-detail-screen"
 import { ProfileScreen } from "@/components/profile-screen"
 import { ToastProvider } from "@/components/ui/toast"
 import { MyTripsScreen } from "@/components/mytrips-screen"
+import { RatingScreen } from "@/components/rating-screen"
 import { Toaster } from "@/components/ui/toaster"
 
 export default function RumboApp() {
@@ -32,7 +33,7 @@ export default function RumboApp() {
   const [userId, setUserId] = useState<string | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
   const [currentScreen, setCurrentScreen] = useState<
-    "onboarding" | "login" | "home" | "search" | "create" | "detail" | "profile" | "my-trips"
+    "onboarding" | "login" | "home" | "search" | "create" | "detail" | "profile" | "my-trips" | "rating"
   >("onboarding")
   const [userType, setUserType] = useState<"passenger" | "driver">("passenger")
   const [trip, setTrip] = useState<Trip | null>(null)
@@ -130,6 +131,14 @@ export default function RumboApp() {
                 setTrip(trip) // ✅ guardamos el viaje seleccionado
                 setCurrentScreen("detail") // ✅ usamos "detail", no "trip-detail"
               }}
+            />
+          )}
+
+          {currentScreen === "rating" && (
+            <RatingScreen
+              userId={userId ?? ""}
+              userType={userType}
+              onNavigate={(screen) => setCurrentScreen(screen)}
             />
           )}
         </div>

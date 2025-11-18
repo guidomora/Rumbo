@@ -4,12 +4,12 @@ import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Clock, DollarSign, ArrowLeft, Play, Flag } from "lucide-react"
+import { Clock, DollarSign, ArrowLeft, Play, Flag, Star } from "lucide-react"
 import {Dialog, DialogContent} from "@/components/ui/dialog"
 
 interface MyTripsScreenProps {
   userId: string
-  onNavigate: (screen: "home" | "create" | "profile") => void
+  onNavigate: (screen: "home" | "create" | "profile" | "rating") => void
   onSelectTrip: (trip: any) => void
 }
 
@@ -201,6 +201,16 @@ export function MyTripsScreen({
                     {actionLoading === trip.id
                       ? "Finalizando..."
                       : "Finalizar viaje"}
+                  </Button>
+                )}
+                {trip.state === "completed" && (
+                  <Button
+                    variant="outline"
+                    onClick={() => onNavigate("rating")}
+                    className="flex-1"
+                  >
+                    <Star className="h-4 w-4 mr-1" />
+                    Calificar pasajeros
                   </Button>
                 )}
               </div>

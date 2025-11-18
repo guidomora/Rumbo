@@ -20,7 +20,7 @@ import { useEffect, useState } from "react";
 interface HomeScreenProps {
   userType: "passenger" | "driver";
   userName?: string | null;
-  onNavigate: (screen: "search" | "create" | "profile" | "my-trips") => void;
+  onNavigate: (screen: "search" | "create" | "profile" | "my-trips" | "rating") => void;
 }
 
 interface Trip {
@@ -247,7 +247,7 @@ export function HomeScreen({
 
       {/* Bottom Navigation */}
       <div className="border-t border-border bg-card">
-        <div className="grid grid-cols-4 gap-1 p-2">
+        <div className={`grid gap-1 p-2 ${userType === "passenger" ? "grid-cols-5" : "grid-cols-4"}`}>
           <Button variant="ghost" className="flex-col h-16 gap-1">
             <Home className="h-5 w-5 text-primary" />
             <span className="text-xs text-primary font-semibold">Inicio</span>
@@ -260,6 +260,16 @@ export function HomeScreen({
             <Search className="h-5 w-5" />
             <span className="text-xs">Buscar</span>
           </Button>
+          {userType === "passenger" && (
+            <Button
+              variant="ghost"
+              className="flex-col h-16 gap-1"
+              onClick={() => onNavigate("rating")}
+            >
+              <Star className="h-5 w-5" />
+              <span className="text-xs">Calificar</span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             className="flex-col h-16 gap-1"
