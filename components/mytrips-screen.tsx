@@ -46,7 +46,7 @@ export function MyTripsScreen({
   useEffect(() => {
   const fetchMyTrips = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/trips`)
+      const res = await fetch(`https://rumbo-back-production.up.railway.app/api/trips`)
       if (!res.ok) throw new Error("Error al cargar tus viajes")
       const data = await res.json()
 
@@ -70,7 +70,7 @@ export function MyTripsScreen({
     setMessage(null)
     try {
       const res = await fetch(
-        `http://localhost:3000/api/trips/${tripId}/start`,
+        `https://rumbo-back-production.up.railway.app/api/trips/${tripId}/start`,
         { method: "PATCH" }
       )
       if (!res.ok) throw new Error("Error al iniciar el viaje.")
@@ -95,7 +95,7 @@ export function MyTripsScreen({
     setMessage(null)
     try {
       const res = await fetch(
-        `http://localhost:3000/api/trips/${tripId}/complete`,
+        `https://rumbo-back-production.up.railway.app/api/trips/${tripId}/complete`,
         { method: "PATCH" }
       )
       if (!res.ok) throw new Error("Error al finalizar el viaje.")

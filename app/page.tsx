@@ -48,7 +48,7 @@ export default function RumboApp() {
 
     const fetchUserName = async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/users/${userId}`)
+        const res = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${userId}`)
         if (!res.ok) throw new Error("Error al obtener usuario")
         const data = await res.json()
         const user = data.user || data.data || data

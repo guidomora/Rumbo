@@ -5,8 +5,8 @@ import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'Rumbo',
+  description: 'Rumbo es una aplicación de viajes colaborativos donde los usuarios pueden crear, compartir y unirse a viajes de manera simple y segura.',
   generator: 'v0.app',
 }
 

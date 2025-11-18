@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -53,10 +53,32 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
     console.log("User ID:", userId);
 
   const { showToast } = useToast()
+  const [driverPhone, setDriverPhone] = useState<string | null>(null)
 
   //COMENTO CAMBIO PARA VER SI FUNCIONA TRIP
   //const params = useParams();
   //const tripId = params.id;
+
+  // Obtener información del conductor para obtener su teléfono
+  useEffect(() => {
+    const fetchDriverInfo = async () => {
+      try {
+        const response = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${trip.driverId}`)
+        if (response.ok) {
+          const data = await response.json()
+          if (data.user?.phone) {
+            setDriverPhone(data.user.phone)
+          }
+        }
+      } catch (error) {
+        console.error("Error al obtener información del conductor:", error)
+      }
+    }
+
+    if (trip.driverId) {
+      fetchDriverInfo()
+    }
+  }, [trip.driverId])
 
   const handleReserve = async (seats: number) => {
     const tripId = trip.id;
@@ -73,7 +95,7 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/trips/${tripId}/select`, {
+      const response = await fetch(`https://rumbo-back-production.up.railway.app/api/trips/${tripId}/select`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,6 +120,36 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
       showToast(error instanceof Error ? error.message : "Hubo un problema al reservar el lugar", "error")
     }
   };
+
+  const handleCall = () => {
+    if (!driverPhone) {
+      showToast("Número de teléfono no disponible", "error")
+      return
+    }
+    // Formatear el número para el link tel: (remover espacios, guiones, etc.)
+    const phoneNumber = driverPhone.replace(/[\s\-\(\)]/g, "")
+    window.location.href = `tel:${phoneNumber}`
+  }
+
+  const handleWhatsApp = () => {
+    if (!driverPhone) {
+      showToast("Número de teléfono no disponible", "error")
+      return
+    }
+    // Formatear el número para WhatsApp (remover espacios, guiones, etc. y agregar código de país si no tiene)
+    let phoneNumber = driverPhone.replace(/[\s\-\(\)]/g, "")
+    // Si no empieza con +, asumimos que es un número argentino y agregamos +54
+    if (!phoneNumber.startsWith("+")) {
+      // Si empieza con 0, lo removemos y agregamos +54
+      if (phoneNumber.startsWith("0")) {
+        phoneNumber = phoneNumber.substring(1)
+      }
+      phoneNumber = `+54${phoneNumber}`
+    }
+    // Crear mensaje con información del viaje
+    const message = encodeURIComponent(`Hola! Me interesa tu viaje de ${trip.origin} a ${trip.destination} el ${trip.date} a las ${trip.time}.`)
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, "_blank")
+  }
 
   return (
     <div className="h-[800px] flex flex-col bg-background">
@@ -139,11 +191,21 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
           </div>
 
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1 bg-transparent" size="sm">
+            <Button 
+              variant="outline" 
+              className="flex-1 bg-transparent" 
+              size="sm"
+              onClick={handleCall}
+              disabled={!driverPhone}>
               <Phone className="w-4 h-4 mr-2" />
               Llamar
             </Button>
-            <Button variant="outline" className="flex-1 bg-transparent" size="sm">
+            <Button 
+              variant="outline" 
+              className="flex-1 bg-transparent" 
+              size="sm"
+              onClick={handleWhatsApp}
+              disabled={!driverPhone}>
               <MessageCircle className="w-4 h-4 mr-2" />
               Mensaje
             </Button>

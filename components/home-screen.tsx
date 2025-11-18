@@ -53,7 +53,7 @@ export function HomeScreen({
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/trips");
+        const res = await fetch("http://rumbo-back-production.up.railway.app/api/trips");
         if (!res.ok) throw new Error("Error al obtener los viajes");
         const data = await res.json();
         const tripsData = data.data || [];
@@ -65,7 +65,7 @@ export function HomeScreen({
 
         const driverResponses = await Promise.all(
           driverIds.map((id) =>
-            fetch(`http://localhost:3000/api/users/${id}`)
+            fetch(`http://rumbo-back-production.up.railway.app/api/users/${id}`)
               .then((r) => r.json())
               .catch((err) => {
                 console.error(`Error fetching user ${id}:`, err);

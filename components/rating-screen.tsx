@@ -59,7 +59,7 @@ export function RatingScreen({
         if (userType === "passenger") {
           // Para pasajeros: obtener todos los viajes y verificar si el usuario es pasajero
           // Obtenemos todos los viajes y luego verificamos los pasajeros de cada uno
-          const tripsRes = await fetch(`http://localhost:3000/api/trips`)
+          const tripsRes = await fetch(`https://rumbo-back-production.up.railway.app/api/trips`)
           
           if (!tripsRes.ok) {
             setTrips([])
@@ -81,7 +81,7 @@ export function RatingScreen({
           const tripsWithPassengers = await Promise.all(
             allTrips.map(async (trip: Trip) => {
               try {
-                const passengersRes = await fetch(`http://localhost:3000/api/trips/${trip.id}/passengers`)
+                const passengersRes = await fetch(`https://rumbo-back-production.up.railway.app/api/trips/${trip.id}/passengers`)
                 if (passengersRes.ok) {
                   const passengersData = await passengersRes.json()
                   const passengers = passengersData.data || []
@@ -108,7 +108,7 @@ export function RatingScreen({
         } else {
           // Para conductores: obtener todos los viajes y filtrar los del conductor
           // Usamos el mismo método que mytrips-screen.tsx
-          const tripsRes = await fetch(`http://localhost:3000/api/trips`)
+          const tripsRes = await fetch(`https://rumbo-back-production.up.railway.app/api/trips`)
           
           if (!tripsRes.ok) {
             let errorMessage = `Error al cargar viajes (${tripsRes.status})`
@@ -155,7 +155,7 @@ export function RatingScreen({
             completedTrips.map(async (trip: Trip) => {
               try {
                 const passengersRes = await fetch(
-                  `http://localhost:3000/api/trips/${trip.id}/passengers`
+                  `https://rumbo-back-production.up.railway.app/api/trips/${trip.id}/passengers`
                 )
                 if (passengersRes.ok) {
                   try {
@@ -216,7 +216,7 @@ export function RatingScreen({
         body.authorId = userId
       }
 
-      const res = await fetch(`http://localhost:3000/api/users/${targetUserId}/ratings`, {
+      const res = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${targetUserId}/ratings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -316,7 +316,7 @@ export function RatingScreen({
                   setError(null)
                   
                   if (userType === "passenger") {
-                    const tripsRes = await fetch(`http://localhost:3000/api/trips/users/${userId}`)
+                    const tripsRes = await fetch(`https://rumbo-back-production.up.railway.app/api/trips/users/${userId}`)
                     if (!tripsRes.ok) throw new Error("Error al cargar viajes")
                     const tripsData = await tripsRes.json()
                     
@@ -325,7 +325,7 @@ export function RatingScreen({
                     )
                     setTrips(completedTrips)
                   } else {
-                    const tripsRes = await fetch(`http://localhost:3000/api/trips/users/${userId}`)
+                    const tripsRes = await fetch(`https://rumbo-back-production.up.railway.app/api/trips/users/${userId}`)
                     if (!tripsRes.ok) throw new Error("Error al cargar viajes")
                     const tripsData = await tripsRes.json()
                     
@@ -339,7 +339,7 @@ export function RatingScreen({
                       completedTrips.map(async (trip: Trip) => {
                         try {
                           const passengersRes = await fetch(
-                            `http://localhost:3000/api/trips/${trip.id}/passengers`
+                            `https://rumbo-back-production.up.railway.app/api/trips/${trip.id}/passengers`
                           )
                           if (passengersRes.ok) {
                             const passengersData = await passengersRes.json()
