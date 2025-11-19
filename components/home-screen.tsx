@@ -20,7 +20,9 @@ import { useEffect, useState } from "react";
 interface HomeScreenProps {
   userType: "passenger" | "driver";
   userName?: string | null;
-  onNavigate: (screen: "search" | "create" | "profile" | "my-trips" | "rating") => void;
+  onNavigate: (
+    screen: "search" | "create" | "profile" | "my-trips" | "rating"
+  ) => void;
 }
 
 interface Trip {
@@ -52,40 +54,75 @@ export function HomeScreen({
 
   useEffect(() => {
     const fetchTrips = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
-        const res = await fetch("http://rumbo-back-production.up.railway.app/api/trips");
-        if (!res.ok) throw new Error("Error al obtener los viajes");
+        console.log("Fetching trips from API...");
+        
+        const res = await fetch(
+          "https://rumbo-back-production.up.railway.app/api/trips"
+        );
+        
+        console.log("Trips response status:", res.status);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Error response:", errorText);
+          throw new Error(`Error ${res.status}: ${errorText}`);
+        }
+        
         const data = await res.json();
-        const tripsData = data.data || [];
+        console.log("Trips data received:", data);
+        
+        const tripsData = data.data || data.trips || [];
+        console.log("Processed trips:", tripsData);
+        
         setTrips(tripsData);
 
-        const driverIds = [
-          ...new Set(tripsData.map((t: Trip) => String(t.driverId))),
-        ] as string[];
+        // Obtener nombres de conductores solo si hay viajes
+        if (tripsData.length > 0) {
+          const driverIds = [
+            ...new Set(tripsData.map((t: Trip) => String(t.driverId))),
+          ] as string[];
 
-        const driverResponses = await Promise.all(
-          driverIds.map((id) =>
-            fetch(`http://rumbo-back-production.up.railway.app/api/users/${id}`)
-              .then((r) => r.json())
-              .catch((err) => {
-                console.error(`Error fetching user ${id}:`, err);
-                return {};
-              })
-          )
-        );
+          console.log("Fetching driver names for:", driverIds);
 
-        const namesMap: Record<string, string> = {};
-        driverResponses.forEach((userData, i) => {
-          const driverId = driverIds[i];
-          console.log(`User data for driver ${driverId}:`, userData);
-          // Intentar obtener el nombre de diferentes lugares
-          const name = userData?.user?.name || userData?.name || userData?.email || driverId;
-          namesMap[driverId] = name;
-        });
+          const namesPromises = driverIds.map(async (id) => {
+            try {
+              const driverRes = await fetch(
+                `https://rumbo-back-production.up.railway.app/api/users/${id}`
+              );
+              
+              if (driverRes.ok) {
+                const driverData = await driverRes.json();
+                const name = driverData.user?.name || driverData.user?.fullName || "Conductor";
+                console.log(`Driver ${id}: ${name}`);
+                return {
+                  id: id,
+                  name: name
+                };
+              }
+            } catch (err) {
+              console.error(`Error fetching driver ${id}:`, err);
+            }
+            return { id: id, name: "Conductor" };
+          });
 
-        setDriverNames(namesMap);
+          const driversData = await Promise.all(namesPromises);
+          const namesMap: Record<string, string> = {};
+          driversData.forEach((driver) => {
+            if (driver) {
+              namesMap[driver.id] = driver.name;
+            }
+          });
+
+          console.log("Driver names map:", namesMap);
+          setDriverNames(namesMap);
+        }
       } catch (err: any) {
-        setError(err.message);
+        console.error("Fetch trips error:", err);
+        setError(err.message || "Error al cargar los viajes. Por favor, intenta de nuevo.");
       } finally {
         setLoading(false);
       }
@@ -187,67 +224,92 @@ export function HomeScreen({
             </Button>
           </div>
 
-          <div className="space-y-3">
-            {trips?.map((trip) => (
-              <Card
-                key={trip.id}
-                className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground">Cargando viajes...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-destructive mb-2">{error}</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.location.reload()}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">
-                        {driverNames[trip.driverId] || "Cargando..."}
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm text-muted-foreground">
-                          4,8
-                        </span>
+                Reintentar
+              </Button>
+            </div>
+          ) : trips && trips.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-muted-foreground">No hay viajes disponibles</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {trips?.map((trip) => (
+                <Card
+                  key={trip.id}
+                  className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">
+                          {driverNames[trip.driverId] || "Cargando..."}
+                        </p>
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm text-muted-foreground">
+                            4,8
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {trip.availableSeats}{" "}
+                      {trip.availableSeats === 1 ? "lugar" : "lugares"}
+                    </Badge>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {trip.availableSeats}{" "}
-                    {trip.availableSeats === 1 ? "lugar" : "lugares"}
-                  </Badge>
-                </div>
 
-                <div className="space-y-2 mb-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="w-4 h-4 text-primary" />
-                    <span className="font-medium">{trip.origin}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="w-4 h-4 text-secondary" />
-                    <span className="font-medium">{trip.destination}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-3 border-t border-border">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{trip.date}</span>
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span className="font-medium">{trip.origin}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-secondary" />
+                      <span className="font-medium">{trip.destination}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-lg font-bold text-primary">
-                    <DollarSign className="w-5 h-5" />
-                    <span>{trip.pricePerPerson.toLocaleString()}</span>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-border">
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        <span>{trip.date}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-lg font-bold text-primary">
+                      <DollarSign className="w-5 h-5" />
+                      <span>{trip.pricePerPerson.toLocaleString()}</span>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Bottom Navigation */}
       <div className="border-t border-border bg-card">
-        <div className={`grid gap-1 p-2 ${userType === "passenger" ? "grid-cols-5" : "grid-cols-4"}`}>
+        <div
+          className={`grid gap-1 p-2 ${
+            userType === "passenger" ? "grid-cols-5" : "grid-cols-4"
+          }`}
+        >
           <Button variant="ghost" className="flex-col h-16 gap-1">
             <Home className="h-5 w-5 text-primary" />
             <span className="text-xs text-primary font-semibold">Inicio</span>
@@ -255,28 +317,28 @@ export function HomeScreen({
           <Button
             variant="ghost"
             className="flex-col h-16 gap-1"
-            onClick={() => onNavigate("search")}
+            onClick={() => onNavigate("my-trips")}
           >
-            <Search className="h-5 w-5" />
-            <span className="text-xs">Buscar</span>
+            <User className="h-5 w-5" />
+            <span className="text-xs">Mis Viajes</span>
           </Button>
           {userType === "passenger" && (
             <Button
               variant="ghost"
               className="flex-col h-16 gap-1"
-              onClick={() => onNavigate("rating")}
+              onClick={() => onNavigate("search")}
             >
-              <Star className="h-5 w-5" />
-              <span className="text-xs">Calificar</span>
+              <Search className="h-5 w-5" />
+              <span className="text-xs">Buscar</span>
             </Button>
           )}
           <Button
             variant="ghost"
             className="flex-col h-16 gap-1"
-            onClick={() => onNavigate("my-trips")}
+            onClick={() => onNavigate("rating")}
           >
-            <User className="h-5 w-5" />
-            <span className="text-xs">Mis Viajes</span>
+            <Star className="h-5 w-5" />
+            <span className="text-xs">Calificar</span>
           </Button>
           <Button
             variant="ghost"

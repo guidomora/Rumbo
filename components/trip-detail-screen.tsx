@@ -54,24 +54,36 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
 
   const { showToast } = useToast()
   const [driverPhone, setDriverPhone] = useState<string | null>(null)
+  const [driverName, setDriverName] = useState<string>("Cargando...")
+  const [loadingDriver, setLoadingDriver] = useState(true)
 
-  //COMENTO CAMBIO PARA VER SI FUNCIONA TRIP
-  //const params = useParams();
-  //const tripId = params.id;
 
-  // Obtener información del conductor para obtener su teléfono
+  // Obtener información del conductor
   useEffect(() => {
     const fetchDriverInfo = async () => {
+      setLoadingDriver(true)
       try {
         const response = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${trip.driverId}`)
         if (response.ok) {
           const data = await response.json()
-          if (data.user?.phone) {
-            setDriverPhone(data.user.phone)
+          const driver = data.user || data.data || data
+          
+          // Obtener el nombre del conductor
+          const name = driver.name || driver.fullName || driver.Name || "Conductor"
+          setDriverName(name)
+          
+          // Obtener el teléfono si está disponible
+          if (driver.phone) {
+            setDriverPhone(driver.phone)
           }
+        } else {
+          setDriverName("Conductor")
         }
       } catch (error) {
         console.error("Error al obtener información del conductor:", error)
+        setDriverName("Conductor")
+      } finally {
+        setLoadingDriver(false)
       }
     }
 
@@ -173,7 +185,7 @@ export function TripDetailScreen({ onBack, userId, trip, userType }: TripDetailS
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-xl font-bold">{trip.driverId}</h2>
+                <h2 className="text-xl font-bold">{driverName}</h2>
                 <Badge variant="secondary" className="text-xs">
                   <Shield className="w-3 h-3 mr-1" />
                   Verificada

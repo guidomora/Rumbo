@@ -85,7 +85,6 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
 
 
   // ✅ Cargar viajes desde el backend
-
   useEffect(() => {
     const fetchTrips = async () => {
       try {
@@ -94,27 +93,45 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
         if (!tripsRes.ok) throw new Error("Error al obtener los viajes")
         const tripsData = await tripsRes.json()
         
+        const allTrips = tripsData.data || []
+        setTrips(allTrips)
+        
+        // Obtener nombres de todos los conductores
+        const driverIds = [...new Set(allTrips.map((trip: Trip) => trip.driverId))]
+        const namesPromises = driverIds.map(async (driverId) => {
+          try {
+            const driverRes = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${driverId}`)
+            if (driverRes.ok) {
+              const driverData = await driverRes.json()
+              return {
+                id: driverId,
+                name: driverData.user?.name || driverData.user?.fullName || "Conductor"
+              }
+            }
+          } catch (err) {
+            console.error(`Error fetching driver ${driverId}:`, err)
+          }
+          return { id: driverId, name: "Conductor" }
+        })
+        
+        const driversData = await Promise.all(namesPromises)
+        const namesMap: Record<string, string> = {}
+        driversData.forEach((driver) => {
+          if (driver) {
+            namesMap[driver.id] = driver.name
+          }
+        })
+        
+        setDriverNames(namesMap)
+        
         // Obtener el último viaje realizado
         const lastTripRes = await fetch(`https://rumbo-back-production.up.railway.app/api/trips/users/${userId}/last`)
         if (lastTripRes.ok) {
           const lastTripData = await lastTripRes.json()
           if (lastTripData.data) {
             setLastTrip(lastTripData.data)
-            
-            // Obtener el nombre del conductor del último viaje
-            const driverId = lastTripData.data.driverId
-            const driverRes = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${driverId}`)
-            if (driverRes.ok) {
-              const driverData = await driverRes.json()
-              setDriverNames(prev => ({
-                ...prev,
-                [driverId]: driverData.user?.name || "Cargando..."
-              }))
-            }
           }
         }
-        
-        setTrips(tripsData.data || [])
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -123,7 +140,7 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
     }
 
     fetchTrips()
-  }, [])
+  }, [userId])
 
     useEffect(() => {
     if (showOriginMap && originMapRef.current && !originMapInstance.current) {
@@ -490,17 +507,17 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
               {filteredTrips.map((trip) => (
                 <Card
                   key={trip.id}
-                  className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  className="p-3 hover:shadow-md transition-shadow cursor-pointer"
                   onClick={() => onSelectTrip(trip)}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                        <User className="w-6 h-6 text-primary" />
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <User className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-semibold">{driverNames[trip.driverId] || trip.driverId}</p>
-                        <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm">{driverNames[trip.driverId] || "Cargando..."}</p>
+                        <div className="flex items-center gap-1">
                           <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                           <span className="text-xs text-muted-foreground">Conductor</span>
                         </div>
@@ -515,27 +532,27 @@ const destinationMapInstance = useRef<google.maps.Map | null>(null);
                     </div>
                   </div>
 
-                  <div className="space-y-2 mb-3">
+                  <div className="space-y-1 mb-2">
                     <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-primary" />
+                      <MapPin className="w-3 h-3 text-primary" />
                       <span className="font-medium">{trip.origin}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-secondary" />
+                      <MapPin className="w-3 h-3 text-secondary" />
                       <span className="font-medium">{trip.destination}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 mb-3">
-                    {trip.music && <Badge variant="outline" className="text-xs"><Music className="w-3 h-3 mr-1" />Música</Badge>}
-                    {trip.pets && <Badge variant="outline" className="text-xs"><Dog className="w-3 h-3 mr-1" />Mascotas</Badge>}
-                    {trip.children && <Badge variant="outline" className="text-xs"><Baby className="w-3 h-3 mr-1" />Niños</Badge>}
-                    {trip.luggage && <Badge variant="outline" className="text-xs"><Luggage className="w-3 h-3 mr-1" />Equipaje</Badge>}
+                  <div className="flex items-center gap-1 mb-2 flex-wrap">
+                    {trip.music && <Badge variant="outline" className="text-xs py-0"><Music className="w-3 h-3 mr-1" />Música</Badge>}
+                    {trip.pets && <Badge variant="outline" className="text-xs py-0"><Dog className="w-3 h-3 mr-1" />Mascotas</Badge>}
+                    {trip.children && <Badge variant="outline" className="text-xs py-0"><Baby className="w-3 h-3 mr-1" />Niños</Badge>}
+                    {trip.luggage && <Badge variant="outline" className="text-xs py-0"><Luggage className="w-3 h-3 mr-1" />Equipaje</Badge>}
                   </div>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-border">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <Clock className="w-4 h-4" />
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />
                       <span>{trip.date} {trip.time}</span>
                     </div>
                     <div className="flex items-center gap-1 text-lg font-bold text-primary">
