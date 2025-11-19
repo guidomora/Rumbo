@@ -59,13 +59,9 @@ export function ProfileScreen({
 
   // editable fields
   const [fullName, setFullName] = useState<string>("");
-  const [about, setAbout] = useState<string>(
-    "Estudiante de UADE, viajo todos los días desde Olavarría. Me gusta la música y conversar durante el viaje.\nSiempre puntual!"
-  );
-  const [vehicle, setVehicle] = useState<string>("Toyota Corolla");
-  const [vehicleDetails, setVehicleDetails] = useState<string>(
-    "2020 • Blanco • ABC 123"
-  );
+  const [about, setAbout] = useState<string>("");
+  const [vehicle, setVehicle] = useState<string>("");
+  const [vehicleDetails, setVehicleDetails] = useState<string>("");
 
   // backups for cancel
   const [backupAbout, setBackupAbout] = useState("");
@@ -78,19 +74,57 @@ export function ProfileScreen({
   const { showToast } = useToast();
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      console.log("No userId provided");
+      return;
+    }
+
+    console.log("Fetching data for userId:", userId);
+
     const fetchUser = async () => {
       setLoadingUser(true);
+      setUserError(null);
       try {
-        const res = await fetch(`https://rumbo-back-production.up.railway.app/api/users/${userId}`);
-        if (!res.ok) throw new Error("Error al obtener datos de usuario");
+        const url = `https://rumbo-back-production.up.railway.app/api/users/${userId}`;
+        console.log("Fetching user from:", url);
+        const res = await fetch(url);
+        console.log("User response status:", res.status);
+        
+        if (!res.ok) {
+          const errorData = await res.text();
+          console.error("User fetch error:", errorData);
+          throw new Error(`Error ${res.status}: ${errorData}`);
+        }
+        
         const data = await res.json();
-        const user = data.user || data.data || {};
-        if (user.fullName) setFullName(user.fullName);
-        if (user.about) setAbout(user.about);
+        console.log("User data received:", data);
+        
+        // Intentar diferentes estructuras de respuesta
+        const user = data.user || data.data || data;
+        console.log("Parsed user:", user);
+        
+        // Intentar obtener el nombre de diferentes campos posibles
+        const userName = user.fullName || user.name || user.Name || "";
+        console.log("User name found:", userName);
+        if (userName) setFullName(userName);
+        
+        // Intentar cargar "about" desde localStorage primero
+        try {
+          const storedAbout = localStorage.getItem(`user_about_${userId}`);
+          if (storedAbout) {
+            setAbout(storedAbout);
+          } else if (user.about) {
+            setAbout(user.about);
+          }
+        } catch {
+          // Si hay error, usar el de la API
+          if (user.about) setAbout(user.about);
+        }
+        
         if (user.vehicle) setVehicle(user.vehicle);
         if (user.vehicleDetails) setVehicleDetails(user.vehicleDetails);
       } catch (err: any) {
+        console.error("User fetch error:", err);
         setUserError(err.message);
       } finally {
         setLoadingUser(false);
@@ -99,15 +133,38 @@ export function ProfileScreen({
 
     const fetchTrips = async () => {
       setLoadingTrips(true);
+      setTripsError(null);
       try {
-        const res = await fetch(
-          `https://rumbo-back-production.up.railway.app/api/trips/users/${userId}`
-        );
-        if (!res.ok) throw new Error("Error al obtener viajes");
+        // Obtener todos los viajes y filtrar por usuario
+        const url = `https://rumbo-back-production.up.railway.app/api/trips`;
+        console.log("Fetching trips from:", url);
+        const res = await fetch(url);
+        console.log("Trips response status:", res.status);
+        
+        if (!res.ok) {
+          const errorData = await res.text();
+          console.error("Trips fetch error:", errorData);
+          throw new Error(`Error ${res.status}: ${errorData}`);
+        }
+        
         const data = await res.json();
-        const tripsData = data.trips || data.data || [];
-        setTrips(tripsData);
+        console.log("Trips data received:", data);
+        
+        // Intentar diferentes estructuras de respuesta
+        let tripsData = data.trips || data.data || data || [];
+        console.log("All trips:", tripsData);
+        
+        // Filtrar viajes del usuario actual
+        if (Array.isArray(tripsData)) {
+          tripsData = tripsData.filter(
+            (trip: Trip) => trip.driverId === userId || trip.createdByUserId === userId
+          );
+          console.log("Filtered trips for user:", tripsData);
+        }
+        
+        setTrips(Array.isArray(tripsData) ? tripsData : []);
       } catch (err: any) {
+        console.error("Trips fetch error:", err);
         setTripsError(err.message);
       } finally {
         setLoadingTrips(false);
@@ -134,18 +191,13 @@ export function ProfileScreen({
       return;
     }
     try {
-      const res = await fetch(`http://rumbo-back-production.up.railway.app/api/users/${userId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ about }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Error al guardar perfil");
-      }
+      // Guardar en localStorage
+      localStorage.setItem(`user_about_${userId}`, about);
+      
       showToast("Perfil actualizado correctamente", "success");
       setEditingAbout(false);
     } catch (err: any) {
+      console.error("Save error:", err);
       showToast(err.message || "Error al guardar", "error");
     }
   };
@@ -179,7 +231,13 @@ export function ProfileScreen({
             </div>
 
             <div className="flex flex-col items-start">
-              <h2 className="text-1xl font-bold mb-1"> Gianfranco Mazzei{fullName}</h2>
+              {loadingUser ? (
+                <h2 className="text-1xl font-bold mb-1">Cargando...</h2>
+              ) : userError ? (
+                <h2 className="text-1xl font-bold mb-1 text-destructive">Error</h2>
+              ) : (
+                <h2 className="text-1xl font-bold mb-1">{fullName || "Usuario"}</h2>
+              )}
               <p className="text-sm opacity-90 mb-1">
                 {userType === "driver" ? "Conductor verificado" : "Pasajero"}
               </p>
@@ -218,7 +276,9 @@ export function ProfileScreen({
         </Card>
 
         <Card className="p-4 text-center shadow-lg">
-          <div className="text-2xl font-bold text-primary mb-1">23</div>
+          <div className="text-2xl font-bold text-primary mb-1">
+            {trips.length}
+          </div>
           <div className="flex items-center justify-center mb-1">
             <MapPin className="w-4 h-4 text-muted-foreground" />
           </div>
@@ -244,14 +304,18 @@ export function ProfileScreen({
               <Edit className="w-4 h-4" />
             </Button>
           </div>
-          {editingAbout ? (
+          {loadingUser ? (
+            <p className="text-sm text-muted-foreground">Cargando...</p>
+          ) : editingAbout ? (
             <Textarea
               value={about}
               onChange={(e) => setAbout(e.target.value)}
               className="text-sm text-muted-foreground"
             />
           ) : (
-            <p className="text-sm text-muted-foreground">{about}</p>
+            <p className="text-sm text-muted-foreground">
+              {about || "No hay información disponible"}
+            </p>
           )}
         </Card>
 
@@ -261,17 +325,21 @@ export function ProfileScreen({
             <div className="flex items-center justify-between">
               <h3 className="font-semibold">Mi vehículo</h3>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Car className="w-6 h-6 text-primary" />
+            {loadingUser ? (
+              <p className="text-sm text-muted-foreground">Cargando...</p>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                  <Car className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="font-medium">{vehicle || "Sin información"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {vehicleDetails || "Sin detalles"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="font-medium">{vehicle}</p>
-                <p className="text-sm text-muted-foreground">
-                  {vehicleDetails}
-                </p>
-              </div>
-            </div>
+            )}
           </Card>
         )}
 
@@ -310,7 +378,6 @@ export function ProfileScreen({
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      {/* Rating placeholder - adjust based on your needs */}
                       <span className="text-xs font-semibold text-primary">
                         {trip.state}
                       </span>
